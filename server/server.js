@@ -1,11 +1,7 @@
 const fs = require("fs");
 const resolve = require("path").resolve;
 const ini = require("ini");
-const Server = require("./dist/server").default;
-
-// requirements for babel on-the-fly transpiling
-require("babel-register");
-require("babel-polyfill");
+const basePluginNames = ["core", "viramate"];
 
 const readConfig = () => {
   const content = fs.readFileSync(resolve(__dirname, "./config.ini"), "utf-8");
@@ -13,30 +9,41 @@ const readConfig = () => {
   return config;
 };
 
-const resetScenarios = () => {
-  const scenariosDir = resolve(__dirname, "./scenarios");
-  Object.keys(require.cache).filter((path) => {
-    return path.indexOf(scenariosDir) != -1;
-  }).forEach((path) => {
-    delete require.cache[path];
-  });
+const readPluginNames = () => {
+  try {
+    return basePluginNames.concat(require("../plugins"));
+  } catch (err) {
+    return basePluginNames;
+  }
 };
 
-const readScenario = (scenarioName) => {
-  resetScenarios();
-  const modulePath = "./scenarios/" + scenarioName;
-  const scenario = require(modulePath);
-  return scenario;
-};
-
-new Server(readConfig(), __dirname, () => {
+const readOptions = () => {
   return new Promise((resolve, reject) => {
     try {
-      const config = readConfig();
-      const scenario = readScenario(config.Scenario.Name);
-      resolve({config, scenario});
+      resolve({
+        config: readConfig(),
+        pluginNames: readPluginNames(),
+        rootDir: __dirname
+      });
     } catch (err) {
       reject(err);
     }
   });
-}).listen();
+};
+
+const getServerClass = () => {
+  if (process.env.NODE_ENV === "production") {
+    return require("./dist/server").default;
+  } else {
+    require("babel-polyfill");
+    require("babel-register");
+    return require("../src/server").default;
+  }
+};
+
+readOptions().then((options) => {
+  const Server = getServerClass();
+  new Server(options, readOptions).listen();
+}, (err) => {
+  throw err;
+});

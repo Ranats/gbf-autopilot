@@ -4,5 +4,7 @@
         ["babel-plugin-root-import", {
             "rootPathSuffix": "src"
         }]
-    ]
+    ],
+    "sourceMaps": true,
+    "retainLines": true
 }

@@ -86,7 +86,7 @@ gulp.task("serve2", shell.task([
 ]));
 
 gulp.task("config", function() {
-  return gulp.src("./{server,controller,extension}/*.sample.{json,ini}")
+  return gulp.src("./{server,controller,extension,.}/*.sample.{json,ini}")
     .pipe(rename(function(path) {
       const suffix = ".sample";
       const index = path.basename.length - suffix.length;

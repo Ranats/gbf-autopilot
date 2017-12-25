@@ -4,3 +4,5 @@ __pycache__/
 *.py[cdo]
 .gulp-cache
 *.log
+config.ini
+plugins.js

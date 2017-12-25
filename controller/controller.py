@@ -23,7 +23,7 @@ COMMAND_PORT = int(config['Controller']['CommandPort'])
 DEFAULT_TWEEN = getattr(pyautogui, config['Controller']['InputTween'])
 
 log = logging.getLogger('werkzeug')
-logLevel = config['Log']['Level']
+logLevel = config['Log']['Level'].upper()
 if logLevel != 'DEBUG':
     log.setLevel(getattr(logging, logLevel))
 
