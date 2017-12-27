@@ -15,12 +15,11 @@ import time
 import os
 
 config = ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
+config.read(os.path.join(os.path.dirname(__file__), '../config.ini'), encoding='utf-8')
 
-WINDOW_TITLE = config['Controller']['WindowTitle']
 DEFAULT_PORT = int(config['Controller']['ListenerPort'])
-COMMAND_PORT = int(config['Controller']['CommandPort'])
-DEFAULT_TWEEN = getattr(pyautogui, config['Controller']['InputTween'])
+COMMAND_PORT = int(config['Server']['ListenerPort'])
+EXIT_KEY_CODE = int(config['Inputs']['ExitKeyCode'])
 
 log = logging.getLogger('werkzeug')
 logLevel = config['Log']['Level'].upper()
@@ -28,7 +27,14 @@ if logLevel != 'DEBUG':
     log.setLevel(getattr(logging, logLevel))
 
 commandStarted = False
-window = Window(WINDOW_TITLE, DEFAULT_TWEEN)
+window = Window({
+    'Language': config['General']['Language'].lower(),
+    'MouseSpeed': float(config['Inputs']['MouseSpeed']),
+    'MouseSpeedBase': float(config['Inputs']['MouseSpeedBase']),
+    'MouseClickDelay': float(config['Inputs']['DelayInMsBetweenMouseDownAndUp']),
+    'MouseClickRandomDelay': float(config['Inputs']['RandomDelayInMsBetweenMouseDownAndUp']),
+    'MouseTween': getattr(pyautogui, config['Controller']['MouseTween'])
+})
 app = Flask(__name__)
 CORS(app)
 
@@ -56,13 +62,16 @@ def stop():
 
 def doClick(json, clicks=1):
     if not commandStarted:
-        return 'FAIL'
-    window.click(
-        elementRect(json),
-        windowRect(json),
-        clicks=clicks
-    )
-    return 'OK'
+        return 'Command server not started', 400
+    try:
+        window.click(
+            elementRect(json),
+            windowRect(json),
+            clicks=clicks
+        )
+        return 'OK', 200
+    except ValueError as e:
+        return str(e), 500
 
 @app.route('/click', methods=['POST'])
 def click():
@@ -72,7 +81,7 @@ def click():
 @app.route('/click/immediate', methods=['POST'])
 def clickImmediate():
     if not commandStarted:
-        return 'FAIL'
+        return 'Command server not started', 400
     window.click()
     return 'OK'
 
@@ -85,11 +94,21 @@ def dblclick():
 def move():
     json = request.json
     if not commandStarted:
-        return 'FAIL'
+        return 'Command server not started', 400
     window.moveTo(
         elementRect(json),
         windowRect(json)
     )
+    return 'OK'
+
+@app.route('/key/press', methods=['POST'])
+def keyPress():
+    json = request.json
+    key = str(json['key']).lower()
+    vkCode = win32api.VkKeyScan(key)
+    scanCode = win32api.MapVirtualKey(vkCode, 0)
+    win32api.keybd_event(vkCode, scanCode, 0, 0)
+    win32api.keybd_event(vkCode, scanCode, 2, 0)
     return 'OK'
 
 def getKeyPressed(keyCode):
@@ -110,7 +129,7 @@ def listenForEscape():
     running = True
 
     def task():
-        if commandStarted and getKeyPressed(win32con.VK_ESCAPE):
+        if commandStarted and getKeyPressed(EXIT_KEY_CODE):
             stopCommandServer()
 
     def runner():

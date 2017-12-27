@@ -90,12 +90,12 @@ socket.on("connect", () => {
   }
   log("Socket connected.");
 });
-socket.on("disconnect", () => {
-  log("Socket disconnected. Reconnecting in 5 seconds...");
-  setTimeout(() => {
-    socket.connect();
-  }, 5000);
-});
+// socket.on("disconnect", () => {
+//   log("Socket disconnected. Reconnecting in 5 seconds...");
+//   setTimeout(() => {
+//     socket.connect();
+//   }, 5000);
+// });
 socket.on("start", () => {
   !running ? startAutopilot(true) : _.noop();
 });

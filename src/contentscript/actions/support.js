@@ -1,9 +1,24 @@
 import $ from "jquery";
+import forEach from "lodash/forEach";
+import isNumber from "lodash/isNumber";
+import isString from "lodash/isString";
 import {translateElement} from "./element";
 
 export default {
-  "support": function(ids, done, fail) {
+  "support": function(summons, done, fail) {
     const supporters = $(".prt-supporter-attribute:not(.disableView) > .btn-supporter");
+    const getSummonIndex = (id, name) => {
+      var summonIndex = -1;
+      forEach(summons, (summon, idx) => {
+        var valid = (isNumber(summon) && parseInt(summon) === id) ||
+          (isString(summon) && summon.toLowerCase().indexOf(name.toLowerCase()) >= 0);
+        if (valid) {
+          summonIndex = idx;
+          return false;
+        }
+      });
+      return summonIndex;
+    };
 
     var element, selectedName, max = 0;
     supporters.each((idx, el) => {
@@ -14,27 +29,27 @@ export default {
       const isMax = !!$el.find(".prt-summon-max").length;
       const title = $el.find(".prt-supporter-summon")
         .text().trim()
-        .match(/^Lvl (\d+) (.+)/);
+        .match(/^(Lvl|Lv)\s+(\d+)\s+(.+)/);
       
-      const level = Number(title[1]);
-      const name = title[2];
+      const level = Number(title[2]);
+      const name = title[3];
 
       const $skill = $el.find(".prt-summon-skill");
-      const rank = $skill.find(".bless-rank2-style").length ? 2 :
-        $skill.find(".bless-rank1-style").length ? 1 : 0;
+      const rank = $skill.hasClass("bless-rank2-style") ? 2 :
+        ($skill.hasClass("bless-rank1-style") ? 1 : 0);
 
       const $quality = $el.find(".prt-summon-quality");
       const plus = $quality.length ? Number($quality.text().trim().substr(1)) : 0;
 
       // start calculating score
-      const index = ids.indexOf(id);
-      const base = index >= 0 ? ids.length - index : 0;
+      const index = getSummonIndex(id, name);
+      const base = index >= 0 ? summons.length - index : 0;
       // calculate from variables with least priority
       const score = (5 * plus / 99) +   // 5: start from the plus mark
         (10 * Number(isMax)) +          // 10: maybe useless but check if it's fully uncapped
         (25 * level / 150) +            // 25: prioritize based on the level
         (50 * rank / 2) +               // 50: next prioritize between none, MLB, and FLB
-        (200 * base / ids.length);      // 200: the summon itself has the top priority
+        (200 * base / summons.length);  // 200: the summon itself has the top priority
       
       if (score > max) {
         element = $el.find(".prt-supporter-info")[0];
@@ -48,6 +63,9 @@ export default {
     }
 
     console.log("Selected support: '" + selectedName + "' with score " + max, element);
-    translateElement(element, true).then(done, fail);
+    translateElement(element, true).then((payload) => {
+      payload.summon = selectedName;
+      done(payload);
+    }, fail);
   }
 };

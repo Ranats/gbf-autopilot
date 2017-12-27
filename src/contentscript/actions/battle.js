@@ -49,7 +49,7 @@ export default {
       const skillState = {
         num: skill,
         id,
-        type: el.getAttribute("type"),
+        type: el.getAttribute("type").split(",").map((type) => type.trim()),
         name: el.getAttribute("ability-name"),
         description, cooldown, effect,
         available: root.className.indexOf("ability-disable") == -1 && cooldown.current == 0,

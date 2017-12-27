@@ -72,12 +72,15 @@ gulp.task("serve", ["build:server"], function() {
   nodemon({
     script: "./server/server.js",
     watch: [
-      "./src/server/", "./src/lib/",
-      "./src/server.js"
+      "./src/lib/",
+      "./src/server/", 
+      "./src/server.js",
+
+      // core plugins
+      "./node_modules/gbf-autopilot-core/build/config.js"
     ].map(function(path) {
       return resolve(__dirname, path);
-    }),
-    tasks: ["build:server"]
+    })
   });
 });
 

@@ -3,8 +3,9 @@ const resolve = require("path").resolve;
 const ini = require("ini");
 const basePluginNames = ["core", "viramate"];
 
+const rootDir = resolve(__dirname, "../");
 const readConfig = () => {
-  const content = fs.readFileSync(resolve(__dirname, "./config.ini"), "utf-8");
+  const content = fs.readFileSync(resolve(rootDir, "config.ini"), "utf-8");
   const config = ini.parse(content);
   return config;
 };
@@ -21,9 +22,9 @@ const readOptions = () => {
   return new Promise((resolve, reject) => {
     try {
       resolve({
+        rootDir,
         config: readConfig(),
         pluginNames: readPluginNames(),
-        rootDir: __dirname
       });
     } catch (err) {
       reject(err);

@@ -1,19 +1,28 @@
-import win32gui
-import pyautogui
 import random
 import math
 import time
+import pyautogui
+import win32gui
 
 DEFAULT_TWEEN = pyautogui.easeInOutCubic
+WINDOW_TITLE_EN = 'Granblue Fantasy'
+WINDOW_TITLE_JP = 'グランブルーファンタジー'
+WINDOW_TITLE_SUFFIX = ' - Google Chrome'
 
 class Window:
-    def __init__(self, title, tween=DEFAULT_TWEEN, duration=0.5):
-        self.title = title
-        self.tween = tween
-        self.duration = duration
+    def __init__(self, config):
+        self.config = config
+        self.title = (WINDOW_TITLE_EN if config['Language'] == 'en' else WINDOW_TITLE_JP) + WINDOW_TITLE_SUFFIX
+        self.tween = config['MouseTween']
+        self.duration = config['MouseSpeedBase'] / config['MouseSpeed']
+        self.clickDelay = config['MouseClickDelay'] / 1000
+        self.clickRandomDelay = config['MouseClickRandomDelay'] / 1000
 
     def getHandle(self):
-        return win32gui.FindWindowEx(None, None, None, self.title)
+        hwnd = win32gui.FindWindowEx(None, None, None, self.title)
+        if not hwnd:
+            raise ValueError("Can't get the window handle!")
+        return hwnd
 
     def getRect(self):
         hwnd = self.getHandle()
@@ -53,8 +62,7 @@ class Window:
 
     def getDuration(self, target):
         distance = self.getDistance(pyautogui.position(), target)
-        duration = random.uniform(0.15, 0.35)
-        duration = max(duration, random.uniform(0, distance / 4000))
+        duration = max(self.duration, random.uniform(0, distance / 4000))
         return duration
 
     def click(self, elementRect=None, windowRect=None, scale=1.0, clicks=1):
@@ -67,7 +75,7 @@ class Window:
             duration=self.getDuration((x, y)),
             tween=self.tween,
             clicks=clicks,
-            interval=random.uniform(0.15, 0.35)
+            interval=random.uniform(self.clickDelay, self.clickDelay + self.clickRandomDelay)
         )
         self.delay()
     

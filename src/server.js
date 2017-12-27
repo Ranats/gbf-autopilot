@@ -91,7 +91,6 @@ export default class Server {
   }
 
   setupStates() {
-    this.subscribers = [];
     this.sockets = {};
     this.running = false;
     this.lastConnectedSocket = null;
@@ -148,60 +147,78 @@ export default class Server {
     });
   }
 
-  makeRequest(path) {
-    return axios.post(`http://localhost:${this.controllerPort}/${path}`);
+  makeRequest(path, data) {
+    return axios.post(`http://localhost:${this.controllerPort}/${path}`, data);
   }
 
   onConnect(socket) {
-    this.getPluginSubmodules("socket.onConnect", (submodule) => {
-      submodule(socket);
-    });
     this.logger.debug(`Client '${socket.id}' connected!`);
     this.lastConnectedSocket = socket;
+    this.getPluginSubmodules("socket.onConnect", (submodule) => submodule(socket));
+  }
+
+  onDisconnect(socket) {
+    this.logger.debug(`Client '${socket.id}' disconnected!`);
+    this.getPluginSubmodules("socket.onDisconnect", (submodule) => submodule(socket));
+    if (this.running) {
+      this.stop().then(noop, ::this.defaultErrorHandler);
+    }
   }
 
   onSocketStart(socket) {
     if (this.running) return;
     this.logger.debug("Socket '" + socket.id + "' started");
+    this.getPluginSubmodules("socket.onSocketStart", (submodule) => submodule(socket));
 
     this.refreshOptionsAsync().then(({config}) => {
-      const botTimeout = Number(config.Server.BotTimeoutInMins);
+      const botTimeout = Number(config.General.TimeLimitInSeconds) * 1000;
       const worker = new Worker(this, config, socket);
       const manager = new WorkerManager(this, socket, worker);
+      const context = manager.context;
+      const submoduleHandler = (payload) => (submodule) => submodule(payload);
 
       const errorHandler = (err) => {
+        this.getPluginSubmodules("worker.error", (submodule) => submodule(context, err));
         this.defaultErrorHandler(err);
         manager.stop().then(noop, ::this.defaultErrorHandler);
       };
 
       const timer = setTimeout(() => {
         if (!this.sockets[socket.id]) return;
+        this.getPluginSubmodules("worker.timeout", submoduleHandler);
         this.logger.debug("Bot reaches maximum time. Disconnecting...");
         errorHandler(new Error("Bot timed out!"));
-      }, botTimeout * 60 * 1000);
+      }, botTimeout);
 
       this.sockets[socket.id] = {
         socket, worker, timer, manager,
         actions: {}
       };
 
+      const workerEvents = [
+        "beforeStart", "start", 
+        "beforeSequence", "afterSequence", 
+        "finish", "afterFinish",
+        "beforeStop", "stop", "afterStop"
+      ];
+      forEach(workerEvents, (eventName) => {
+        worker.on(eventName, (payload) => {
+          this.getPluginSubmodules("worker." + eventName, submoduleHandler(payload));
+        });
+      });
+
       this.makeRequest("start").then(() => {
         this.running = true;
+        this.logger.debug("Autopilot started.");
         return manager.start();
-      }).then(() => {
-        this.getPluginSubmodules("socket.onSocketStart", (submodule) => {
-          submodule(socket, worker, manager);
-        });
-      }, errorHandler);
+      }).then(noop, errorHandler);
     }, ::this.defaultErrorHandler);
   }
 
   onSocketStop(socket) {
     if (!this.running) return;
     this.logger.debug("Got stop request from socket '" + socket.id + "'");
-    this.getPluginSubmodules("socket.onSocketStart", (submodule) => {
-      submodule(socket);
-    });
+    this.getPluginSubmodules("socket.onSocketStop", (submodule) => submodule(socket));
     this.stop().then(noop, ::this.defaultErrorHandler);
   }
 
@@ -212,36 +229,23 @@ export default class Server {
     if (this.config.Log.DebugSocket) {
       this.logger.debug("Socket: RECV", data);
     }
+    this.getPluginSubmodules("socket.onAction", (submodule) => submodule(action, data.payload, socket, data));
     callback(action, data.payload);
-    this.getPluginSubmodules("socket.onAction", (submodule) => {
-      submodule(action, data.payload, socket, data);
-    });
     clearTimeout(action.timer);
   }
 
   onActionSuccess(socket, data) {
     this.onAction(socket, data, (action, payload) => {
+      this.getPluginSubmodules("socket.onActionSuccess", (submodule) => submodule(action, payload, socket, data));
       action.success(payload);
-      this.getPluginSubmodules("socket.onActionSuccess", (submodule) => {
-        submodule(action, payload, socket, data);
-      });
     });
   }
 
   onActionFail(socket, data) {
     this.onAction(socket, data, (action, payload) => {
+      this.getPluginSubmodules("socket.onActionFail", (submodule) => submodule(action, payload, socket, data));
       action.fail(payload);
-      this.getPluginSubmodules("socket.onActionFail", (submodule) => {
-        submodule(action, payload, socket, data);
-      });
     });
-  }
-
-  onDisconnect(socket) {
-    this.logger.debug(`Client '${socket.id}' disconnected!`);
-    if (this.running) {
-      this.stop().then(noop, ::this.defaultErrorHandler);
-    }
   }
 
   getAction(socket, id) {
@@ -293,13 +297,6 @@ export default class Server {
             reject(new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`));
           };
           cb();
-          /*
-          if (timeout.stopOnTimeout) {
-            this.stop().then(cb, cb);
-          } else {
-            cb();
-          }
-          */
         }, timeout.timeoutInMs) : 0
       };
 
@@ -351,11 +348,10 @@ export default class Server {
         reject(new Error("No connected sockets"));
         return;
       }
+      this.getPluginSubmodules("beforeStart", (submodule) => submodule(this.lastConnectedSocket));
       this.lastConnectedSocket.emit("start");
       this.onSocketStart(this.lastConnectedSocket);
-      this.getPluginSubmodules("start", (submodule) => {
-        submodule(this.lastConnectedSocket);
-      });
+      this.getPluginSubmodules("start", (submodule) => submodule(this.lastConnectedSocket));
       resolve();
     });
   }
@@ -378,21 +374,19 @@ export default class Server {
           handleSocket(cb);
         }, ::this.defaultErrorHandler);
       };
+      this.getPluginSubmodules("beforeStop", (submodule) => submodule());
       handleSocket(() => {
         this.running = false;
         this.sockets = {};
-        forEach(this.subscribers, (subscriber) => {
-          (subscriber.onStop || noop)();
-        });
-        this.getPluginSubmodules("stop", (submodule) => {
-          submodule();
-        });
+        this.getPluginSubmodules("stop", (submodule) => submodule());
+        this.logger.debug("Autopilot stopped.");
         resolve();
       });
     });
   }
   
   defaultErrorHandler(err) {
+    this.getPluginSubmodules("error", (submodule) => submodule(err));
     this.logger.error(err instanceof Error ? err : err.toString());
   }
 }
