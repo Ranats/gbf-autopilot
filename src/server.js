@@ -7,7 +7,7 @@ import bodyParser from "body-parser";
 
 // awesome stuff
 import Rx from "rxjs/Rx";
-import Immutable from "immutable";
+import * as Immutable from "immutable";
 
 import isObject from "lodash/isObject";
 import forEach from "lodash/forEach";
@@ -22,14 +22,14 @@ export default class Server {
   constructor(options, readOptions) {
     this.options = options;
     this.readOptions = readOptions;
+    // This may be bad by design, but I don't expect this subject to error or complete at all!
+    this.subject = new Rx.Subject();
 
     this.config = options.config;
     this.rootDir = options.rootDir;
     this.logger = Logger(this.config);
     this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
     this.plugins = this.loadPlugins(options.pluginNames);
-    // This may be bad by design, but I don't expect this subject to error or complete at all!
-    this.subject = new Rx.Subject();
 
     this.refreshOptions(options);
     this.setupListeners();
@@ -215,7 +215,12 @@ export default class Server {
   }
 
   onBroadcast(socket, data) {
-    this.emit("socket.onBroadcast", {socket, data}, true);
+    this.emit("socket.broadcast", {
+      id: data.id,
+      name: data.action,
+      payload: data.payload,
+      socket, data
+    }, true);
   }
 
   onAction(socket, data, callback) {
@@ -411,21 +416,33 @@ export default class Server {
   }
 
   emit(eventName, payload, immutable) {
+    payload = payload || {};
+    if (!isObject(payload)) {
+      payload = {data: payload};
+    }
+    payload["$eventName"] = eventName;
     if (immutable) {
       // Make the payload immutable when needed
-      payload = Immutable.Map(payload).set("name", eventName);
+      payload = Immutable.Map(payload);;
     }
     this.subject.next(payload);
   }
 
-  on(eventName, observer, onError, onComplete) {
+  getObservable(eventName) {
     return this.subject.map((payload) => {
       // We don't expect the observers to handle Immutable.js object though
       // So we convert them back to plain JS object
-      return Immutable.isImmutable(payload) ? payload.toJS() : payload;
+      return (payload && payload.toJS) ? payload.toJS() : payload;
     }).filter((payload) => {
-      return payload.name === eventName;
-    }).subscribe(
+      return payload["$eventName"] === eventName;
+    }).map((payload) => {
+      delete payload["$eventName"];
+      return payload;
+    });
+  }
+
+  on(eventName, observer, onError, onComplete) {
+    return this.getObservable(eventName).subscribe(
       observer, 
       onError || ::this.defaultErrorHandler,
       onComplete
