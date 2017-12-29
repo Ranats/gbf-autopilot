@@ -5,11 +5,13 @@ import SocketIO from "socket.io";
 import Express from "express";
 import bodyParser from "body-parser";
 
+// awesome stuff
+import Rx from "rxjs/Rx";
+import Immutable from "immutable";
+
 import isObject from "lodash/isObject";
 import forEach from "lodash/forEach";
-import filter from "lodash/filter";
 import noop from "lodash/noop";
-import map from "lodash/map";
 
 import Worker from "./server/Worker";
 import WorkerManager from "./server/WorkerManager";
@@ -26,6 +28,8 @@ export default class Server {
     this.logger = Logger(this.config);
     this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
     this.plugins = this.loadPlugins(options.pluginNames);
+    // This may be bad by design, but I don't expect this subject to error or complete at all!
+    this.subject = new Rx.Subject();
 
     this.refreshOptions(options);
     this.setupListeners();
@@ -34,26 +38,12 @@ export default class Server {
   }
 
   loadPlugins(pluginNames) {
-    const plugins = [];
-    const pluginPrefix = "gbf-autopilot";
+    const plugins = {};
     forEach(pluginNames, (pluginName) => {
-      const pluginModuleName = [pluginPrefix, pluginName].join("-");
-      const plugin = require(pluginModuleName);
-      if (plugin.server) {
-        plugins.push(plugin.server(this));
-      }
+      const plugin = require(pluginName);
+      plugins[pluginName] = plugin.call(this);
     });
     return plugins;
-  }
-
-  getPluginSubmodules(name, cb) {
-    const submodules = map(filter(this.plugins, (plugin) => {
-      return !!plugin[name];
-    }), (plugin) => {
-      return plugin[name];
-    });
-    if (cb) forEach(submodules, cb);
-    return submodules;
   }
 
   refreshOptions(options) {
@@ -86,6 +76,7 @@ export default class Server {
       "stop": ::this.onSocketStop,
       "action": ::this.onActionSuccess,
       "action.fail": ::this.onActionFail,
+      "broadcast": ::this.onBroadcast,
       "disconnect": ::this.onDisconnect
     };
   }
@@ -116,6 +107,8 @@ export default class Server {
       });
     };
 
+    this.emit("express.beforeSetup", app);
+
     app.use(bodyParser.text());
     app.post("/start", (req, res) => {
       this.logger.debug("Got start request from webhook");
@@ -129,12 +122,12 @@ export default class Server {
       res.end(Object.keys(this.sockets).join(", "));
     });
 
-    this.getPluginSubmodules("express", (submodule) => {
-      submodule(app);
-    });
+    this.emit("express.afterSetup", app);
   }
 
   setupSocket(io) {
+    this.emit("socket.beforeSetup", io);
+
     io.on("connection", (socket) => {
       forEach(this.listeners, (listener, name) => {
         socket.on(name, (msg) => listener(socket, msg));
@@ -142,24 +135,23 @@ export default class Server {
       this.onConnect(socket);
     });
 
-    this.getPluginSubmodules("socket", (submodule) => {
-      submodule(io);
-    });
+    this.emit("socket.afterSetup", io);
   }
 
   makeRequest(path, data) {
+    this.emit("controller.request", {method: "POST", path, data}, true);
     return axios.post(`http://localhost:${this.controllerPort}/${path}`, data);
   }
 
   onConnect(socket) {
+    this.emit("socket.connect", socket);
     this.logger.debug(`Client '${socket.id}' connected!`);
     this.lastConnectedSocket = socket;
-    this.getPluginSubmodules("socket.onConnect", (submodule) => submodule(socket));
   }
 
   onDisconnect(socket) {
+    this.emit("socket.disconnect", socket);
     this.logger.debug(`Client '${socket.id}' disconnected!`);
-    this.getPluginSubmodules("socket.onDisconnect", (submodule) => submodule(socket));
     if (this.running) {
       this.stop().then(noop, ::this.defaultErrorHandler);
     }
@@ -167,27 +159,27 @@ export default class Server {
 
   onSocketStart(socket) {
     if (this.running) return;
+    this.emit("socket.socketStart", socket);
     this.logger.debug("Socket '" + socket.id + "' started");
-    this.getPluginSubmodules("socket.onSocketStart", (submodule) => submodule(socket));
 
     this.refreshOptionsAsync().then(({config}) => {
       const botTimeout = Number(config.General.TimeLimitInSeconds) * 1000;
       const worker = new Worker(this, config, socket);
       const manager = new WorkerManager(this, socket, worker);
       const context = manager.context;
-      const submoduleHandler = (payload) => (submodule) => submodule(payload);
 
       const errorHandler = (err) => {
-        this.getPluginSubmodules("worker.error", (submodule) => submodule(context, err));
+        this.emit("worker.error", {context, error: err});
         this.defaultErrorHandler(err);
         manager.stop().then(noop, ::this.defaultErrorHandler);
       };
 
       const timer = setTimeout(() => {
         if (!this.sockets[socket.id]) return;
-        this.getPluginSubmodules("worker.timeout", submoduleHandler);
+        const error = new Error("Bot timed out!");
+        this.emit("worker.timeout", {context, error});
         this.logger.debug("Bot reaches maximum time. Disconnecting...");
-        errorHandler(new Error("Bot timed out!"));
+        errorHandler(error);
       }, botTimeout);
 
       this.sockets[socket.id] = {
@@ -203,7 +195,7 @@ export default class Server {
       ];
       forEach(workerEvents, (eventName) => {
         worker.on(eventName, (payload) => {
-          this.getPluginSubmodules("worker." + eventName, submoduleHandler(payload));
+          this.emit("worker." + eventName, payload);
         });
       });
 
@@ -217,33 +209,43 @@ export default class Server {
 
   onSocketStop(socket) {
     if (!this.running) return;
+    this.emit("socket.socketStop", socket);
     this.logger.debug("Got stop request from socket '" + socket.id + "'");
-    this.getPluginSubmodules("socket.onSocketStop", (submodule) => submodule(socket));
     this.stop().then(noop, ::this.defaultErrorHandler);
+  }
+
+  onBroadcast(socket, data) {
+    this.emit("socket.onBroadcast", {socket, data}, true);
   }
 
   onAction(socket, data, callback) {
     const action = this.getAction(socket, data.id);
     // silently fail
     if (!action) return;
+    this.emit("socket.action", {
+      id: data.id,
+      action,
+      payload: data.payload,
+      socket, data
+    }, true);
     if (this.config.Log.DebugSocket) {
       this.logger.debug("Socket: RECV", data);
     }
-    this.getPluginSubmodules("socket.onAction", (submodule) => submodule(action, data.payload, socket, data));
     callback(action, data.payload);
+    action.complete(data.payload);
     clearTimeout(action.timer);
   }
 
   onActionSuccess(socket, data) {
     this.onAction(socket, data, (action, payload) => {
-      this.getPluginSubmodules("socket.onActionSuccess", (submodule) => submodule(action, payload, socket, data));
+      this.emit("socket.actionSuccess", {id: data.id, action, payload, socket, data}, true);
       action.success(payload);
     });
   }
 
   onActionFail(socket, data) {
     this.onAction(socket, data, (action, payload) => {
-      this.getPluginSubmodules("socket.onActionFail", (submodule) => submodule(action, payload, socket, data));
+      this.emit("socket.actionFail", {id: data.id, action, payload, socket, data}, true);
       action.fail(payload);
     });
   }
@@ -271,6 +273,14 @@ export default class Server {
         return;
       }
 
+      const eventData = {
+        id,
+        socket: realSocket,
+        action: actionName,
+        payload, timeout
+      };
+      this.emit("socket.beforeSendAction", eventData, true);
+
       const actions = socket.actions;
       const done = () => {
         resolved = true;
@@ -280,10 +290,14 @@ export default class Server {
 
       actions[id] = {
         success: (payload) => {
+          eventData.payload = payload;
+          this.emit("socket.successSendAction", eventData, true);
           resolve(payload);
           done();
         },
         fail: (payload) => {
+          eventData.payload = payload;
+          this.emit("socket.failSendAction", eventData, true);
           reject(payload);
           done();
         },
@@ -293,11 +307,14 @@ export default class Server {
             return;
           }
 
-          const cb = () => {
-            reject(new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`));
-          };
-          cb();
-        }, timeout.timeoutInMs) : 0
+          const error = eventData.error = new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`)
+          this.emit("socket.timeoutSendAction", eventData, true);
+          reject(error);
+        }, timeout.timeoutInMs) : 0,
+        complete: (payload) => {
+          eventData.payload = payload;
+          this.emit("socket.afterSendAction", eventData, true);
+        }
       };
 
       const data = {
@@ -307,6 +324,7 @@ export default class Server {
         type: "request"
       };
 
+      this.emit("socket.sendAction", eventData, true);
       if (this.config.Log.DebugSocket) {
         this.logger.debug("Socket: SEND", data);
       }
@@ -332,7 +350,9 @@ export default class Server {
   }
 
   listen() {
+    this.emit("server.beforeListening");
     this.server.listen(this.port, "localhost", () => {
+      this.emit("server.onListening");
       this.logger.debug("Started listening on localhost:" + this.port);
     });
     return this;
@@ -348,10 +368,10 @@ export default class Server {
         reject(new Error("No connected sockets"));
         return;
       }
-      this.getPluginSubmodules("beforeStart", (submodule) => submodule(this.lastConnectedSocket));
+      this.emit("server.beforeStart", this.lastConnectedSocket);
       this.lastConnectedSocket.emit("start");
       this.onSocketStart(this.lastConnectedSocket);
-      this.getPluginSubmodules("start", (submodule) => submodule(this.lastConnectedSocket));
+      this.emit("server.onStart", this.lastConnectedSocket);
       resolve();
     });
   }
@@ -374,11 +394,11 @@ export default class Server {
           handleSocket(cb);
         }, ::this.defaultErrorHandler);
       };
-      this.getPluginSubmodules("beforeStop", (submodule) => submodule());
+      this.emit("server.beforeStop");
       handleSocket(() => {
         this.running = false;
         this.sockets = {};
-        this.getPluginSubmodules("stop", (submodule) => submodule());
+        this.emit("server.stop");
         this.logger.debug("Autopilot stopped.");
         resolve();
       });
@@ -386,7 +406,29 @@ export default class Server {
   }
   
   defaultErrorHandler(err) {
-    this.getPluginSubmodules("error", (submodule) => submodule(err));
+    this.emit("server.error", err);
     this.logger.error(err instanceof Error ? err : err.toString());
+  }
+
+  emit(eventName, payload, immutable) {
+    if (immutable) {
+      // Make the payload immutable when needed
+      payload = Immutable.Map(payload).set("name", eventName);
+    }
+    this.subject.next(payload);
+  }
+
+  on(eventName, observer, onError, onComplete) {
+    return this.subject.map((payload) => {
+      // We don't expect the observers to handle Immutable.js object though
+      // So we convert them back to plain JS object
+      return Immutable.isImmutable(payload) ? payload.toJS() : payload;
+    }).filter((payload) => {
+      return payload.name === eventName;
+    }).subscribe(
+      observer, 
+      onError || ::this.defaultErrorHandler,
+      onComplete
+    );
   }
 }

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const resolve = require("path").resolve;
 const ini = require("ini");
-const basePluginNames = ["core", "viramate"];
+const basePluginNames = ["gbf-autopilot-core"];
 
 const rootDir = resolve(__dirname, "../");
 const readConfig = () => {

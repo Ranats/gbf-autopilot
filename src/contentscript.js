@@ -22,8 +22,8 @@ port.middleware("send", (message, next) => {
 port.setup(channel.port1, (port, listeners) => {
   port.onmessage = listeners.onMessage;
 });
-const requestExternal = ::port.sendRequest;
 
+const requestExternal = ::port.sendRequest;
 const handleRequest = (request, sendResponse) => {
   var rejected = false;
   var callHandler;
@@ -98,6 +98,11 @@ extensionPort.onRequest = (request) => {
   handleRequest(request, (response) => {
     extensionPort.sendMessage(response);
   });
+};
+port.onBroadcast = (message) => {
+  delete message.token;
+  message.id = shortid.generate();
+  extensionPort.sendMessage(message);
 };
 
 injectScript(external, (token) => {

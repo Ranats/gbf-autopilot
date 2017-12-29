@@ -1,5 +1,4 @@
 const gulp = require("gulp");
-const gutil = require("gulp-util");
 const babel = require("gulp-babel");
 const rename = require("gulp-rename");
 const nodemon = require("gulp-nodemon");
@@ -8,19 +7,21 @@ const livereload = require("gulp-livereload");
 const FileCache = require("gulp-file-cache");
 const resolve = require("path").resolve;
 
+// 2017-12-29: in response to gulp-util deprecation
+// https://medium.com/gulpjs/gulp-util-ca3b1f9f9ac5
+const log = require("fancy-log");
+const PluginError = require("plugin-error");
+
 const webpack = require("webpack");
 const webpackConfig = require("./webpack.config");
 const webpackCallback = function(cb) {
   var done = false;
   return function(err, stats) {
     if (err) {
-      throw new gutil.PluginError("[webpack]", err);
+      throw new PluginError("[webpack]", err);
     }
 
-    gutil.log("[webpack]",  stats.toString({
-      colors: gutil.colors.supportsColor
-    }));
-
+    log("[webpack]", stats.toString());
     livereload.reload();
 
     if (!done) {

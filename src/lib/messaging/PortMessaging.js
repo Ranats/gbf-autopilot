@@ -8,6 +8,7 @@ export default class PortMessaging {
     this.unsentMessages = [];
     this.pendingMessages = {};
     this.onRequest = _.noop;
+    this.onBroadcast = _.noop;
     this.middlewares = {
       receive: [],
       send: []
@@ -68,6 +69,8 @@ export default class PortMessaging {
         });
       } else if (message.type == "response") {
         this.dequeueMessage(message.id, message.payload, message.success);
+      } else if (message.type == "broadcast") {
+        this.onBroadcast.call(this, message);
       }
     }, ::console.error);
   }

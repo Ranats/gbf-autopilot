@@ -165,6 +165,9 @@ const setupMessaging = (messaging, port) => {
       onLoad: () => loadAutopilot(port, messaging)
     });
   };
+  messaging.onBroadcast = (msg) => {
+    socket.emit("broadcast", msg);
+  };
   return messaging;
 };
 
