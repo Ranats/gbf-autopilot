@@ -41,7 +41,8 @@ export default class Server {
     const plugins = {};
     forEach(pluginNames, (pluginName) => {
       const plugin = require(pluginName);
-      plugins[pluginName] = plugin.call(this);
+      if (!plugin.server) return;
+      plugins[pluginName] = plugin.server.call(this);
     });
     return plugins;
   }
@@ -171,7 +172,7 @@ export default class Server {
       const errorHandler = (err) => {
         this.emit("worker.error", {context, error: err});
         this.defaultErrorHandler(err);
-        manager.stop().then(noop, ::this.defaultErrorHandler);
+        this.stop().then(noop, ::this.defaultErrorHandler);
       };
 
       const timer = setTimeout(() => {
@@ -397,7 +398,11 @@ export default class Server {
         const socket = this.sockets[socketId];
         socket.manager.stop().then(() => {
           handleSocket(cb);
-        }, ::this.defaultErrorHandler);
+        }, (err) => {
+          // ignore error anyway, but log them for debugging purpose
+          this.defaultErrorHandler(err);
+          handleSocket(cb);
+        });
       };
       this.emit("server.beforeStop");
       handleSocket(() => {
@@ -412,7 +417,11 @@ export default class Server {
   
   defaultErrorHandler(err) {
     this.emit("server.error", err);
-    this.logger.error(err instanceof Error ? err : err.toString());
+    if (err) {
+      this.logger.error(err instanceof Error ? err : err.toString());
+    } else {
+      this.logger.error(new Error("Unknown error occured"));
+    }
   }
 
   emit(eventName, payload, immutable) {

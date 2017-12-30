@@ -10,6 +10,9 @@ export default class Worker {
     this.config = config;
     this.socket = socket;
     this.port = Number(config.Controller.ListenerPort);
+
+    this.processTimeout = Number(config.Server.ProcessTimeoutInMs);
+    this.workerTimeout = Number(config.Server.WorkerTimeoutInMs);
   }
 
   sendAction(actionName, payload, timeout) {
@@ -40,19 +43,34 @@ export default class Worker {
         return;
       }
 
-      const callback = (payload) => {
+      var done = false;
+      const wrap = (cb) => {
+        return (value) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timeout);
+          cb(value);
+        };
+      };
+      const timeout = setTimeout(() => {
+        callbackError({context, error: new Error("Worker not stopping after " + (this.workerTimeout / 1000) + " sec(s)")});
+      }, this.workerTimeout); 
+      const callback = wrap((payload) => {
         this.removeListener("finish", callback);
         this.emit("stop", payload);
-      };
-      const callbackError = (payload) => {
+      });
+      const callbackError = wrap((payload) => {
         this.removeListener("error", callbackError);
         reject(payload.error);
-      };
-      const callbackAfter = (context) => {
+      });
+      const callbackAfter = wrap((context) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timeout);
         this.removeListener("error", callbackError);
         this.removeListener("afterFinish", callbackAfter);
         resolve(context);
-      };
+      });
 
       this.on("finish", callback);
       this.on("error", callbackError);
@@ -63,32 +81,48 @@ export default class Worker {
 
   process(context, pipeline, lastResult) {
     return new Promise((resolve, reject) => {
-      const next = (result) => {
-        context.lastResult = result;
-        this.emit("afterSequence", {sequence, context, pipeline, result});
-        this.process(context, pipeline, result).then(resolve, reject);
-      };
-
       const sequence = pipeline.shift();
       if (!sequence || !this.running) {
         this.emit("finish", {context, result: lastResult});
-        resolve(context);
+        resolve(lastResult);
         return;
       }
 
+      var done = false;
+      const wrap = (cb) => {
+        return (value) => {
+          if (done || !this.running) return;
+          done = true;
+          clearTimeout(timeout);
+          cb(value);
+        };
+      };
+      const next = wrap((result) => {
+        context.result = result;
+        this.emit("afterSequence", {sequence, context, pipeline, result});
+        this.process(context, pipeline, result).then(resolve, reject);
+      });
+      const fail = wrap((err) => {
+        this.running = false;
+        this.emit("error", {sequence, context, pipeline, error: err});
+        reject(err);
+      });
+      const timeout = !sequence.doNotTimeout ? setTimeout(() => {
+        fail(new Error("Sequence not returning after " + (this.processTimeout / 1000) + " sec(s)"));
+      }, this.processTimeout) : 0;
+
       this.emit("beforeSequence", {sequence, context, pipeline});
-      this.logger.debug("Running sequence:", sequence.name);
+      // this.logger.debug("Running sequence:", sequence.name);
 
       try {
-        const promise = sequence(context, lastResult);
+        const promise = sequence.call(this, context, lastResult);
         if (promise instanceof Promise) {
           promise.then(next, reject);
         } else {
           next(promise);
         }
       } catch (e) {
-        this.emit("error", {sequence, context, pipeline, error: e});
-        reject(e);
+        fail(e);
       }
     });
   }
