@@ -64,11 +64,6 @@ const handleRequest = (request, sendResponse) => {
     fail(actions.error(action));
   } else if (result !== undefined) {
     done(result);
-  } else {
-    setTimeout(() => {
-      rejected = true;
-      fail("Timed out!");
-    }, timeout);
   }
 };
 

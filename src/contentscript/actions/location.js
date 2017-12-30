@@ -12,7 +12,11 @@ export default {
     return window.location;
   },
   "location.change": function(location, done) {
-    window.location = location;
+    if (location.startsWith("#")) {
+      window.location.hash = location;
+    } else {
+      window.location = location;
+    }
     window.setTimeout(() => done("OK"), 1000);
   },
   "location.reload": function(payload, done) {

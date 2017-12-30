@@ -63,9 +63,10 @@ export default {
       return fail(new Error("No support found!"));
     }
 
-    console.log("Selected support: '" + selectedName + "' with score " + max, element);
     translateElement(element, true).then((payload) => {
+      console.log("Selected support: '" + selectedName + "' with score " + max, element, payload);
       payload.summon = selectedName;
+      payload.score = max;
       done(payload);
     }, fail);
   }

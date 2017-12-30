@@ -68,7 +68,7 @@ export default class Server {
   refreshConfig(config) {
     this.config = config;
     this.controllerPort = Number(config.Controller.ListenerPort);
-    this.timeout = Number(config.Server.ActionTimeoutInMs);
+    this.timeout = Number(config.Server.ProcessTimeoutInMs);
   }
 
   setupListeners() {
