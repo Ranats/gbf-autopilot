@@ -10,8 +10,9 @@ export default {
     const getSummonIndex = (id, name) => {
       var summonIndex = -1;
       forEach(summons, (summon, idx) => {
-        var valid = (isNumber(summon) && parseInt(summon) === id) ||
-          (isString(summon) && summon.toLowerCase().indexOf(name.toLowerCase()) >= 0);
+        const validId = isNumber(summon) && parseInt(summon) === id;
+        const validName = isString(summon) && name.toLowerCase().indexOf(summon.toLowerCase()) >= 0;
+        const valid = validId || validName;
         if (valid) {
           summonIndex = idx;
           return false;

@@ -202,7 +202,7 @@ export default class Server {
 
       this.makeRequest("start").then(() => {
         this.running = true;
-        this.logger.debug("Autopilot started.");
+        this.logger.info("Autopilot started.");
         return manager.start();
       }).then(noop, errorHandler);
     }, ::this.defaultErrorHandler);
@@ -398,9 +398,10 @@ export default class Server {
         const socket = this.sockets[socketId];
         socket.manager.stop().then(() => {
           handleSocket(cb);
-        }, (err) => {
+        }, () => {
           // ignore error anyway, but log them for debugging purpose
-          this.defaultErrorHandler(err);
+          // edit: nvm, it's getting too verbose lol
+          // this.defaultErrorHandler(err);
           handleSocket(cb);
         });
       };
@@ -409,7 +410,7 @@ export default class Server {
         this.running = false;
         this.sockets = {};
         this.emit("server.stop");
-        this.logger.debug("Autopilot stopped.");
+        this.logger.info("Autopilot stopped.");
         resolve();
       });
     });

@@ -99,10 +99,8 @@ extensionPort.onRequest = (request) => {
     extensionPort.sendMessage(response);
   });
 };
-port.onBroadcast = (message) => {
-  delete message.token;
-  message.id = shortid.generate();
-  extensionPort.sendMessage(message);
+port.onBroadcast = ({action, payload}) => {
+  extensionPort.sendBroadcast(shortid.generate(), action, payload);
 };
 
 injectScript(external, (token) => {
@@ -118,5 +116,8 @@ const portSetup = () => {
 
 window.addEventListener("load", portSetup);
 window.addEventListener("hashchange", (evt) => {
-  hashSubscribers.forEach((subscriber) => subscriber(evt));
+  extensionPort.sendBroadcast(shortid.generate(), "hashchange", {
+    oldUrl: evt.oldURL,
+    newUrl: evt.newURL
+  });
 });

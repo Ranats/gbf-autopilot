@@ -22,6 +22,7 @@
       "name": "Node: Attach",
       "type": "node",
       "request": "attach",
+      "protocol": "inspector",
       "port": 9229
     },
     {

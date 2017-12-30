@@ -30,6 +30,21 @@ const webpackCallback = function(cb) {
     }
   };
 };
+const nodemonOptions = function(extras) {
+  return Object.assign({
+    script: "./server/server.js",
+    watch: [
+      "./src/lib/",
+      "./src/server/", 
+      "./src/server.js",
+
+      // core plugins
+      "./node_modules/gbf-autopilot-core/build/index.js"
+    ].map(function(path) {
+      return resolve(__dirname, path);
+    }),
+  }, extras || {});
+};
 
 const cache = new FileCache();
 const globs = {
@@ -57,6 +72,7 @@ gulp.task("watch:extension", function(cb) {
     watch: true
   });
   webpack(config, webpackCallback(cb));
+  livereload.listen();
 });
 
 gulp.task("watch:server", function() {
@@ -64,25 +80,16 @@ gulp.task("watch:server", function() {
 });
 
 gulp.task("build", ["build:server", "build:extension"]);
-
-gulp.task("watch", ["watch:extension"], function() {
-  livereload.listen();
-});
-
+gulp.task("watch", ["build:extension", "watch:extension"]);
 gulp.task("serve", ["build:server"], function() {
-  nodemon({
-    script: "./server/server.js",
-    watch: [
-      "./src/lib/",
-      "./src/server/", 
-      "./src/server.js",
-
-      // core plugins
-      "./node_modules/gbf-autopilot-core/build/config.js"
-    ].map(function(path) {
-      return resolve(__dirname, path);
-    })
-  });
+  nodemon(nodemonOptions());
+});
+gulp.task("serve:debug", ["build:server"], function() {
+  nodemon(nodemonOptions({
+    exec: "node --inspect-brk",
+    debug: true,
+    verbose: true
+  }));
 });
 
 gulp.task("serve2", shell.task([

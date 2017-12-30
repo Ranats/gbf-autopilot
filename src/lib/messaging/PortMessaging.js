@@ -135,6 +135,13 @@ export default class PortMessaging {
     });
   }
 
+  sendBroadcast(id, action, payload) {
+    this.sendMessage({
+      id, action, payload,
+      type: "broadcast",
+    });
+  }
+
   sendMessage(originalMessage) {
     if (!this.isConnected()) {
       this.unsentMessages.push(originalMessage);

@@ -93,7 +93,7 @@ export default class Worker {
         return (value) => {
           if (done || !this.running) return;
           done = true;
-          clearTimeout(timeout);
+          // clearTimeout(timeout);
           cb(value);
         };
       };
@@ -107,9 +107,11 @@ export default class Worker {
         this.emit("error", {sequence, context, pipeline, error: err});
         reject(err);
       });
+      /*
       const timeout = !sequence.doNotTimeout ? setTimeout(() => {
-        fail(new Error("Sequence not returning after " + (this.processTimeout / 1000) + " sec(s)"));
+        fail(new Error("Sequence '" + sequence.name + "' not returning after " + (this.processTimeout / 1000) + " sec(s)"));
       }, this.processTimeout) : 0;
+      */
 
       this.emit("beforeSequence", {sequence, context, pipeline});
       // this.logger.debug("Running sequence:", sequence.name);
@@ -117,7 +119,9 @@ export default class Worker {
       try {
         const promise = sequence.call(this, context, lastResult);
         if (promise instanceof Promise) {
-          promise.then(next, reject);
+          promise.then(next, fail);
+        } else if (promise instanceof Error) {
+          fail(promise);
         } else {
           next(promise);
         }
