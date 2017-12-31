@@ -234,9 +234,6 @@ export default class Server {
       payload: data.payload,
       socket, data
     }, true);
-    if (this.config.Log.DebugSocket) {
-      this.logger.debug("Socket: RECV", data);
-    }
     callback(action, data.payload);
     action.complete(data.payload);
     clearTimeout(action.timer);

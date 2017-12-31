@@ -31,10 +31,15 @@
         "http://gbf.game.mbga.jp/*"
       ],
       "js": [
+        "dist/vendor.js",
         "dist/contentscript.js"
       ],
       "run_at": "document_start",
       "all_frames": false
     }
+  ],
+  "web_accessible_resources": [
+    "dist/vendor.js",
+    "dist/external.js"
   ]
 }

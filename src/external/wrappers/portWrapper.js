@@ -2,7 +2,7 @@ import shortid from "shortid";
 
 export default (port, actions) => ({
   broadcastMessage(action, payload) {
-    this.sendMessage(shortid.generate(), "broadcast", payload);
+    this.sendMessage(shortid.generate(), "broadcast", action, payload);
   },
   sendMessage(id, type, action, payload, success) {
     port.postMessage({

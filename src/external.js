@@ -3,8 +3,8 @@ import actionsWrapper from "./external/wrappers/actionsWrapper";
 import portWrapper from "./external/wrappers/portWrapper";
 
 const setupObservers = (portHandler, observables) => {
-  observables.ajax.subscribe((payload) => {
-    portHandler.broadcastMessage(payload);
+  observables.ajax.subscribe(({name, payload}) => {
+    portHandler.broadcastMessage(name, payload);
   });
 };
 
