@@ -327,10 +327,8 @@ export default class Server {
         type: "request"
       };
 
+      eventData.data = data;
       this.emit("socket.sendAction", eventData, true);
-      if (this.config.Log.DebugSocket) {
-        this.logger.debug("Socket: SEND", data);
-      }
       realSocket.emit("action", data);
     });
   }
