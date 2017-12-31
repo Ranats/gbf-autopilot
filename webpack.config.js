@@ -1,13 +1,16 @@
 const webpack = require("webpack");
 const merge = require("webpack-merge");
 const resolve = require("path").resolve;
+const shortid  = require("shortid");
 
 var config = {
   devtool: "cheap-module-source-map",
   entry: {
     background: "./src/background",
     contentscript: "./src/contentscript",
-    popup: "./src/popup"
+    external: "./src/external",
+    popup: "./src/popup",
+    vendor: ["rxjs", "jquery", "lodash", "socket.io-client"]
   },
   output: {
     filename: "[name].js",
@@ -26,7 +29,14 @@ var config = {
       ]
     }]
   },
-  plugins: []
+  plugins: [
+    new webpack.DefinePlugin({
+      "EXTERNAL_TOKEN": JSON.stringify(shortid.generate())
+    }),
+    new webpack.optimize.CommonsChunkPlugin({
+      name: "vendor"
+    })
+  ]
 };
 
 if (process.env.NODE_ENV === "production") {

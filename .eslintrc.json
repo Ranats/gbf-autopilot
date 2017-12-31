@@ -33,6 +33,7 @@
     "no-console": "off"
   },
   "globals": {
+    "EXTERNAL_TOKEN": false,
     "chrome": false,
     "io": false
   },
