@@ -11,6 +11,7 @@ const resolve = require("path").resolve;
 // https://medium.com/gulpjs/gulp-util-ca3b1f9f9ac5
 const log = require("fancy-log");
 const PluginError = require("plugin-error");
+const del = require("del");
 
 const webpack = require("webpack");
 const webpackConfig = require("./webpack.config");
@@ -55,17 +56,29 @@ const globs = {
   extension: "./extension/pages/**/*.html"
 };
 
-gulp.task("build:extension", function(cb) {
+gulp.task("clean:extension", function() {
+  return del([
+    "extension/dist/**/*.js",
+  ]);
+});
+
+gulp.task("clean:server", function() {
+  return del([
+    "server/dist/**/*.js",
+  ]);
+});
+
+gulp.task("build:extension", gulp.series("clean:extension"), function(cb) {
   webpack(webpackConfig, webpackCallback(cb));
 });
 
-gulp.task("build:server", function() {
+gulp.task("build:server", gulp.series("clean:server", function() {
   return gulp.src(globs.server)
     .pipe(cache.filter())
     .pipe(babel())
     .pipe(cache.cache())
     .pipe(gulp.dest("./server/dist"));
-});
+}));
 
 gulp.task("watch:extension", function(cb) {
   const config = Object.assign({}, webpackConfig, {
@@ -75,22 +88,25 @@ gulp.task("watch:extension", function(cb) {
   livereload.listen();
 });
 
-gulp.task("watch:server", function() {
-  gulp.watch(globs.server.src, ["build:server"]);
+gulp.task("watch:server", function(done) {
+  gulp.watch(globs.server.src, gulp.series("build:server"));
+  done();
 });
 
-gulp.task("build", ["build:server", "build:extension"]);
-gulp.task("watch", ["build:extension", "watch:extension"]);
-gulp.task("serve", ["build:server"], function() {
+gulp.task("build", gulp.series("build:server", "build:extension"));
+gulp.task("watch", gulp.series("build:extension", "watch:extension"));
+gulp.task("serve", gulp.series("build:server"), function(done) {
   nodemon(nodemonOptions());
+  done();
 });
-gulp.task("serve:debug", ["build:server"], function() {
+gulp.task("serve:debug", gulp.series("build:server", function(done) {
   nodemon(nodemonOptions({
     exec: "node --inspect-brk",
     debug: true,
     verbose: true
   }));
-});
+  done();
+}));
 
 gulp.task("serve2", shell.task([
   "concurrently \"gulp serve\" \"python controller/controller.py\""
@@ -106,4 +122,4 @@ gulp.task("config", function() {
     .pipe(gulp.dest("."));
 });
 
-gulp.task("default", ["build"]);
+gulp.task("default", gulp.series("build"));

@@ -11,7 +11,7 @@ const setupObservers = (portHandler, observables) => {
 function external(context, port) {
   const ajaxObservable = ajaxInjection(context);
   const actionsHandler = actionsWrapper(context);
-  const portHandler = portWrapper(port, actionsHandler);
+  const portHandler = portWrapper(actionsHandler).setup(port);
   setupObservers(portHandler, {
     ajax: ajaxObservable
   });

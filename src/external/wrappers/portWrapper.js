@@ -1,11 +1,11 @@
 import shortid from "shortid";
 
-export default (port, actions) => ({
+export default (actions) => ({
   broadcastMessage(action, payload) {
     this.sendMessage(shortid.generate(), "broadcast", action, payload);
   },
   sendMessage(id, type, action, payload, success) {
-    port.postMessage({
+    this.port.postMessage({
       id, action, type,
       token: EXTERNAL_TOKEN,
       payload,
@@ -23,9 +23,11 @@ export default (port, actions) => ({
       this.sendMessage(id, "response", result, false);
     });
   },
-  setup() {
-    port.onmessage = ::this.onMessage;
-    port.onmessageerror = ::this.onError;
+  setup(port) {
+    this.port = port;
+    this.port.onmessage = ::this.onMessage;
+    this.port.onmessageerror = ::this.onError;
+    return this;
   },
   onError: ::console.error
 });

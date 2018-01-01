@@ -26,8 +26,6 @@ export default (context) => ({
     const method = (options.method || "GET").toUpperCase();
 
     xhr.open(method, options.url, true);
-    if (method != "GET") {
-    }
 
     xhr.addEventListener("readystatechange", () => {
       if (xhr.readyState === xhr.DONE) {
