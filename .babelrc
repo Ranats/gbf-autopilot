@@ -5,6 +5,6 @@
             "rootPathSuffix": "src"
         }]
     ],
-    "sourceMaps": true,
+    "sourceMaps": "inline",
     "retainLines": true
 }

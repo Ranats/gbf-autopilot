@@ -18,9 +18,9 @@ export default (actions) => ({
     const {id, action, payload} = evt.data;
     const handler = actions[action] || actions.error;
     handler(payload, (result) => {
-      this.sendMessage(id, "response", result, true);
+      this.sendMessage(id, "response", action, result, true);
     }, (result) => {
-      this.sendMessage(id, "response", result, false);
+      this.sendMessage(id, "response", action, result, false);
     });
   },
   setup(port) {

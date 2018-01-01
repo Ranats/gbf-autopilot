@@ -45,11 +45,12 @@ export default (context) => ({
       const contentType = options.dataType != "json" ?
         "application/x-www-form-urlencoded" :
         "application/json";
-      const data = options.dataType != "json" ?
-        urlEncode(options.data) :
-        JSON.stringify(options.data);
+      const data = isString(options.data) ? options.data :
+        (options.dataType != "json" ?
+          urlEncode(options.data) :
+          JSON.stringify(options.data));
       xhr.setRequestHeader("Content-Type", contentType);
-      xhr.send(method != "GET" ? data : null);
+      xhr.send(data);
     } else {
       xhr.send();
     }

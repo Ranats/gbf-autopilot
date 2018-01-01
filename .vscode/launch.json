@@ -23,6 +23,13 @@
       "type": "node",
       "request": "attach",
       "protocol": "inspector",
+      "outFiles": [
+        "${workspaceFolder}/server/dist/**/*.js"
+      ],
+      "skipFiles": [
+        "<node_internals>/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.js"
+      ],
       "port": 9229
     },
     {

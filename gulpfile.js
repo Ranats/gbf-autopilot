@@ -58,13 +58,15 @@ const globs = {
 
 gulp.task("clean:extension", function() {
   return del([
-    "extension/dist/**/*.js",
+    "extension/dist/**/*.*",
+    "!extension/dist/.gitignore"
   ]);
 });
 
 gulp.task("clean:server", function() {
   return del([
-    "server/dist/**/*.js",
+    "server/dist/**/*.*",
+    "!server/dist/.gitignore"
   ]);
 });
 
@@ -95,10 +97,10 @@ gulp.task("watch:server", function(done) {
 
 gulp.task("build", gulp.series("build:server", "build:extension"));
 gulp.task("watch", gulp.series("build:extension", "watch:extension"));
-gulp.task("serve", gulp.series("build:server"), function(done) {
+gulp.task("serve", gulp.series("build:server", function(done) {
   nodemon(nodemonOptions());
   done();
-});
+}));
 gulp.task("serve:debug", gulp.series("build:server", function(done) {
   nodemon(nodemonOptions({
     exec: "node --inspect-brk",
