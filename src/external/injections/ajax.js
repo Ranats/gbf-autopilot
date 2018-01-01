@@ -24,7 +24,7 @@ export default function ajaxInjection(context) {
 
     this.addEventListener("readystatechange", function() {
       if (this.readyState === XHR.DONE && (this.responseType == "" || this.responseType == "text")) {
-        xhrState.response = this.responseText;
+        xhrState.contentType = this.getResponseHeader("Content-Type");
         xhrState.status = this.status;
         xhrStates.delete(this);
         emit("ajaxFinish", xhrState);

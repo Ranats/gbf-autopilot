@@ -6,18 +6,6 @@ export default function external(context, extensionUrl) {
     xhr.send();
     new Function(xhr.responseText)();
     callback();
-    /*
-    xhr.send();
-    const parent = (document.head || document.documentElement);
-    const script = document.createElement("script");
-    script.src = url;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      callback();
-    };
-    parent.appendChild(script);
-    */
   };
 
   const portSetup = (evt) => {

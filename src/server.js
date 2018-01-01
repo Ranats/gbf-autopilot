@@ -337,6 +337,7 @@ export default class Server {
     return new Promise((resolve, reject) => {
       if (!this.sockets[id]) {
         reject(new Error("Socket not found!"));
+        return;
       }
       this.logger.debug("Stopping socket '" + id + "'");
       const {socket, timer, actions} = this.sockets[id];

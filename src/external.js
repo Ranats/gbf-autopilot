@@ -16,6 +16,9 @@ function external(context, port) {
     ajax: ajaxObservable
   });
   console.log("ext> Loaded!");
+  window.addEventListener("load", () => {
+    portHandler.broadcastMessage("userId", context.Game.UserId);
+  });
   return true;
 }
 
