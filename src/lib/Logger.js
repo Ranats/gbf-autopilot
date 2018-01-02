@@ -4,7 +4,7 @@ import fs from "fs";
 
 function getFilename(config, level) {
   const timestamp = moment().format("YYYYMMDD");
-  const directory = config.Log.LogToFileDirectory || "log";
+  const directory = config.Debug.LogToFileDirectory || "log";
   return directory + "/" + timestamp + (level ? "_" + level : "") + ".log";
 }
 
@@ -26,16 +26,16 @@ function createFileTransport(config, level) {
 }
 
 export default function(config) {
-  const level = config.Log.Level || "debug";
+  const level = config.Debug.Level || "debug";
   const transports = [];
   
-  if (config.Log.LogToOutput) {
+  if (config.Debug.LogToOutput) {
     transports.push(new (winston.transports.Console)({
       timestamp: true,
     }));
   }
 
-  if (config.Log.LogToFile) {
+  if (config.Debug.LogToFile) {
     if (level != "error") {
       transports.push(createFileTransport(config));
     }

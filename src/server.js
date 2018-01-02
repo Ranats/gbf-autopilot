@@ -414,11 +414,11 @@ export default class Server {
   
   defaultErrorHandler(err) {
     this.emit("server.error", err);
-    if (err) {
-      this.logger.error(err instanceof Error ? err : err.toString());
-    } else {
-      this.logger.error(new Error("Unknown error occured"));
+    err = err || new Error("Unknown error occured");
+    if (this.config.Debug.ThrowErrors) {
+      throw err;
     }
+    this.logger.error(err instanceof Error ? err : err.toString());
   }
 
   emit(eventName, payload, immutable) {
@@ -429,7 +429,7 @@ export default class Server {
     payload["$eventName"] = eventName;
     if (immutable) {
       // Make the payload immutable when needed
-      payload = Immutable.Map(payload);;
+      payload = Immutable.Map(payload);
     }
     this.subject.next(payload);
   }
