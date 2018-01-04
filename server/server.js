@@ -1,7 +1,6 @@
 const fs = require("fs");
 const resolve = require("path").resolve;
 const ini = require("ini");
-const basePluginNames = ["gbf-autopilot-core"];
 
 const rootDir = resolve(__dirname, "../");
 const readConfig = () => {
@@ -10,11 +9,12 @@ const readConfig = () => {
   return config;
 };
 
-const readPluginNames = () => {
+const readExtensionNames = () => {
   try {
-    return basePluginNames.concat(require("../plugins"));
+    return require("../extensions");
   } catch (err) {
-    return basePluginNames;
+    console.log("extensions.js not found. Not loading extensions.");
+    return [];
   }
 };
 
@@ -24,7 +24,7 @@ const readOptions = () => {
       resolve({
         rootDir,
         config: readConfig(),
-        pluginNames: readPluginNames(),
+        extensionNames: readExtensionNames(),
       });
     } catch (err) {
       reject(err);

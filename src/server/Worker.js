@@ -1,12 +1,14 @@
-import forEach from "lodash/forEach";
+import Rx from "rxjs/Rx";
 
 export default class Worker {
   constructor(server, config, socket) {
     this.server = server;
     this.logger = server.logger;
     this.defaultErrorHandler = ::server.defaultErrorHandler;
-    this.listeners = {};
-    this.running = false;
+
+    this.subject = new Rx.Subject();
+    this.observers = new WeakMap();
+
     this.config = config;
     this.socket = socket;
     this.port = Number(config.Controller.ListenerPort);
@@ -15,147 +17,58 @@ export default class Worker {
     this.workerTimeout = Number(config.Server.WorkerTimeoutInMs);
   }
 
-  sendAction(actionName, payload, timeout) {
-    return this.server.sendAction(this.socket, actionName, payload, timeout);
+  async sendAction(actionName, payload, timeout) {
+    return await this.server.sendAction(this.socket, actionName, payload, timeout);
   }
 
-  start(context, pipeline) {
+  run(context, step, lastResult) {
+    step = step.bind(this, context, lastResult);
+    this.emit("beforeSequence", {context, sequence: step, lastResult});
     return new Promise((resolve, reject) => {
-      if (this.running) {
-        resolve(context);
-        return;
-      }
-
-      this.running = true;
-      this.emit("start", {context, pipeline});
-      this.process(context, pipeline).then((context) => {
-        this.running = false;
-        this.emit("afterFinish", context);
-        resolve(context);
-      }, reject);
-    });
-  }
-
-  stop(context) {
-    return new Promise((resolve, reject) => {
-      if (!this.running) {
-        resolve(context);
-        return;
-      }
-
-      var done = false;
-      const wrap = (cb) => {
-        return (value) => {
-          if (done) return;
-          done = true;
-          clearTimeout(timeout);
-          cb(value);
-        };
+      const done = (processed) => {
+        const result = resolve(processed);
+        this.emit("afterSequence", {context, sequence: step, lastResult, result});
+        return result;
       };
-      const timeout = setTimeout(() => {
-        callbackError({context, error: new Error("Worker not stopping after " + (this.workerTimeout / 1000) + " sec(s)")});
-      }, this.workerTimeout); 
-      const callback = wrap((payload) => {
-        this.removeListener("finish", callback);
-        this.emit("stop", payload);
-      });
-      const callbackError = wrap((payload) => {
-        this.removeListener("error", callbackError);
-        reject(payload.error);
-      });
-      const callbackAfter = wrap((context) => {
-        if (done) return;
-        done = true;
-        clearTimeout(timeout);
-        this.removeListener("error", callbackError);
-        this.removeListener("afterFinish", callbackAfter);
-        resolve(context);
-      });
 
-      this.on("finish", callback);
-      this.on("error", callbackError);
-      this.on("afterFinish", callbackAfter);
-      this.running = false;
-    });
-  }
-
-  process(context, pipeline, lastResult) {
-    return new Promise((resolve, reject) => {
-      const sequence = pipeline.shift();
-      if (!sequence || !this.running) {
-        this.emit("finish", {context, result: lastResult});
-        resolve(lastResult);
-        return;
-      }
-
-      var done = false;
-      const wrap = (cb) => {
-        return (value) => {
-          if (done || !this.running) return;
-          done = true;
-          // clearTimeout(timeout);
-          cb(value);
-        };
+      const fail = (err) => {
+        const result = reject(err);
+        this.emit("errorSequence", {context, sequence: step, lastResult, result});
+        return result;
       };
-      const next = wrap((result) => {
-        context.result = result;
-        this.emit("afterSequence", {sequence, context, pipeline, result});
-        this.process(context, pipeline, result).then(resolve, reject);
-      });
-      const fail = wrap((err) => {
-        this.running = false;
-        this.emit("error", {sequence, context, pipeline, error: err});
-        reject(err);
-      });
-      /*
-      const timeout = !sequence.doNotTimeout ? setTimeout(() => {
-        fail(new Error("Sequence '" + sequence.name + "' not returning after " + (this.processTimeout / 1000) + " sec(s)"));
-      }, this.processTimeout) : 0;
-      */
-
-      this.emit("beforeSequence", {sequence, context, pipeline});
-      // this.logger.debug("Running sequence:", sequence.name);
 
       try {
-        const promise = sequence.call(this, context, lastResult);
-        if (promise instanceof Promise) {
-          promise.then(next, fail);
-        } else if (promise instanceof Error) {
-          fail(promise);
+        var result;
+        const processed = step();
+        if (processed instanceof Promise) {
+          result = processed.then(done, fail);
+        } else if (processed instanceof Error) {
+          result = fail(processed);
         } else {
-          next(promise);
+          result = done(processed);
         }
-      } catch (e) {
-        fail(e);
+        return result;
+      } catch (err) {
+        return fail(err);
       }
     });
   }
 
-  on(eventName, listener) {
-    if (!this.listeners[eventName]) {
-      this.listeners[eventName] = [];
-    }
-    this.listeners[eventName].push(listener);
-    return this;
+  on(eventName, observer) {
+    const subscription = this.subject
+      .filter(({name}) => name === eventName)
+      .subscribe(observer);
+    this.observers.set(observer, subscription);
+    return subscription;
   }
 
   emit(eventName, payload) {
-    forEach(this.getListeners(eventName), (listener) => {
-      listener(payload);
-    });
+    this.subject.next({name: eventName, payload});
     return this;
   }
 
-  getListeners(eventName) {
-    return this.listeners[eventName] || [];
-  }
-
-  removeListener(eventName, listener) {
-    const listeners = this.getListeners(eventName);
-    const index = listeners.indexOf(listener);
-    if (index > -1) {
-      listeners.splice(index, 1);
-    }
+  removeListener(eventName, observer) {
+    this.observers.get(observer).unsubscribe();
     return this;
   }
 }

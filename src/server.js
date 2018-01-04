@@ -15,21 +15,25 @@ import noop from "lodash/noop";
 
 import Worker from "./server/Worker";
 import WorkerManager from "./server/WorkerManager";
-
 import Logger from "./lib/Logger";
+
+// core extension
+import coreExtension from "gbf-autopilot-core";
 
 export default class Server {
   constructor(options, readOptions) {
     this.options = options;
     this.readOptions = readOptions;
-    // This may be bad by design, but I don't expect this subject to error or complete at all!
     this.subject = new Rx.Subject();
 
     this.config = options.config;
     this.rootDir = options.rootDir;
     this.logger = Logger(this.config);
     this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
-    this.plugins = this.loadPlugins(options.pluginNames);
+
+    // extension stuff
+    this.extensions = this.loadExtensions(options.extensionNames);
+    this.coreExtension = coreExtension.server.call(this);
 
     this.refreshOptions(options);
     this.setupListeners();
@@ -37,14 +41,14 @@ export default class Server {
     this.setupApps();
   }
 
-  loadPlugins(pluginNames) {
-    const plugins = {};
-    forEach(pluginNames, (pluginName) => {
-      const plugin = require(pluginName);
-      if (!plugin.server) return;
-      plugins[pluginName] = plugin.server.call(this);
+  loadExtensions(extensionNames) {
+    const extensions = {};
+    forEach(extensionNames, (extensionName) => {
+      const extension = require(extensionName);
+      if (!extension.server) return;
+      extensions[extensionName] = extension.server.call(this);
     });
-    return plugins;
+    return extensions;
   }
 
   refreshOptions(options) {
@@ -204,6 +208,8 @@ export default class Server {
         this.running = true;
         this.logger.info("Autopilot started.");
         return manager.start();
+      }).then(() => {
+        return this.running ? this.stop() : null;
       }).then(noop, errorHandler);
     }, ::this.defaultErrorHandler);
   }

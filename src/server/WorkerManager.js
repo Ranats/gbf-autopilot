@@ -3,10 +3,21 @@ export default class WorkerManager {
     this.server = server;
     this.socket = socket;
     this.worker = worker;
-
-    this.pipeline = [];
-    this.context = {server, socket, worker, manager: this};
     this.running = false;
+  }
+
+  createContext() {
+    const context = {
+      server: this.server, 
+      socket: this.socket, 
+      worker: this.worker, 
+      manager: this,
+
+      run: this.run.bind(this, context),
+      process: this.process.bind(this, context),
+      isRunning: () => this.running
+    };
+    return context;
   }
 
   setPipeline(pipeline) {
@@ -15,33 +26,83 @@ export default class WorkerManager {
   }
 
   start() {
-    this.emit("beforeStart", this.context);
-    return this.worker.start(this.context, this.pipeline.slice(0));
-  }
+    const stop = (context, result) => {
+      context.result = result;
+      this.emit("beforeStop", context);
+      this.running = false;
+      delete context.finish;
+      delete context.error;
+      this.emit("stop", context);
+    };
 
-  process(pipeline) {
-    return this.worker.process(this.context, pipeline);
-  }
-
-  stop() {
-    this.emit("beforeStop", this.context);
     return new Promise((resolve, reject) => {
-      this.worker.stop().then((context) => {
-        this.emit("afterStop", context);
-        return this.server.stopSocket(this.socket.id);
-      }).then(resolve, reject);
+      if (this.running) {
+        return resolve();
+      }
+
+      const context = this.createContext();
+      this.emit("beforeStart", context);
+      this.running = true;
+      this.resolveLater = context.finish = resolve.bind(resolve, context);
+      this.rejectLater = context.error = reject.bind(reject, context);
+      this.emit("start", context);
+    }).then((context, result) => {
+      stop(context, result);
+      return result;
+    }, (context, err) => {
+      stop(context, err);
+      throw err;
     });
   }
 
-  on(eventName, listener) {
-    return this.worker.on(eventName, listener);
+  stop() {
+    return new Promise((resolve, reject) => {
+      if (!this.running) {
+        return resolve();
+      }
+
+      this.running = false;
+      const subscription = this.on("stop", ({result}) => {
+        subscription.unsubscribe();
+        return result instanceof Error ? reject(result) : resolve(result);
+      });
+    });
+  }
+
+  on(eventName, observer) {
+    return this.worker.on(eventName, observer);
   }
 
   emit(eventName, payload) {
-    return this.worker.emit(eventName, payload);
+    this.worker.emit(eventName, payload);
+    return this;
+  }
+
+  removeListener(eventName, observer) {
+    this.worker.removeListener(eventName, observer);
+    return this;
+  }
+
+  async process(context, pipeline, lastResult) {
+    const step = pipeline.shift();
+    if (!step || !context.isRunning()) {
+      if (lastResult instanceof Error) {
+        throw lastResult;
+      } else {
+        return lastResult;
+      }
+    }
+
+    const result = await this.run(context, step, lastResult);
+    return await this.process(context, pipeline, result);
+  }
+
+
+  async run(context, step, lastResult) {
+    return await this.worker.run(context, step, lastResult);
   }
 
   isRunning() {
-    return this.worker.running;
+    return this.running;
   }
 }
