@@ -57,6 +57,7 @@ export default class Worker {
   on(eventName, observer) {
     const subscription = this.subject
       .filter(({name}) => name === eventName)
+      .map(({payload}) => payload)
       .subscribe(observer);
     this.observers.set(observer, subscription);
     return subscription;

@@ -1,22 +1,29 @@
+import shortid from "shortid";
+
 export default class WorkerManager {
   constructor(server, socket, worker) {
     this.server = server;
     this.socket = socket;
     this.worker = worker;
+    this.config = server.config;
+    this.logger = server.logger;
     this.running = false;
   }
 
   createContext() {
     const context = {
+      id: shortid.generate(),
+      config: this.config,
       server: this.server, 
       socket: this.socket, 
       worker: this.worker, 
+      logger: this.logger,
       manager: this,
 
-      run: this.run.bind(this, context),
-      process: this.process.bind(this, context),
       isRunning: () => this.running
     };
+    context.run = this.run.bind(this, context);
+    context.process = this.process.bind(this, context);
     return context;
   }
 
@@ -55,18 +62,11 @@ export default class WorkerManager {
     });
   }
 
-  stop() {
-    return new Promise((resolve, reject) => {
-      if (!this.running) {
-        return resolve();
-      }
+  async stop() {
+    if (!this.running) return;
 
-      this.running = false;
-      const subscription = this.on("stop", ({result}) => {
-        subscription.unsubscribe();
-        return result instanceof Error ? reject(result) : resolve(result);
-      });
-    });
+    this.running = false;
+    return await this.server.stopSocket(this.socket.id);
   }
 
   on(eventName, observer) {
@@ -83,23 +83,35 @@ export default class WorkerManager {
     return this;
   }
 
-  async process(context, pipeline, lastResult) {
-    const step = pipeline.shift();
-    if (!step || !context.isRunning()) {
-      if (lastResult instanceof Error) {
-        throw lastResult;
-      } else {
-        return lastResult;
+  process(context, pipeline, lastResult) {
+    return new Promise((resolve, reject) => {
+      const step = pipeline.shift();
+      if (!step || !context.isRunning()) {
+        if (lastResult instanceof Error) {
+          return reject(lastResult);
+        } else {
+          return resolve(lastResult);
+        }
       }
-    }
 
-    const result = await this.run(context, step, lastResult);
-    return await this.process(context, pipeline, result);
+      return this.run(context, step, lastResult).then((result) => {
+        return this.process(context, pipeline, result);
+      }).then(resolve, reject);
+    });
   }
 
 
-  async run(context, step, lastResult) {
-    return await this.worker.run(context, step, lastResult);
+  run(context, step, lastResult) {
+    return new Promise((resolve, reject) => {
+      if (!context.isRunning()) {
+        if (lastResult instanceof Error) {
+          return reject(lastResult);
+        } else {
+          return resolve(lastResult);
+        }
+      }
+      return this.worker.run(context, step, lastResult).then(resolve, reject);
+    });
   }
 
   isRunning() {

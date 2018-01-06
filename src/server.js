@@ -209,7 +209,7 @@ export default class Server {
         this.logger.info("Autopilot started.");
         return manager.start();
       }).then(() => {
-        return this.running ? this.stop() : null;
+        return this.stop();
       }).then(noop, errorHandler);
     }, ::this.defaultErrorHandler);
   }
