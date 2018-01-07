@@ -180,10 +180,26 @@ export default {
       selector = payload.selector;
     }
     const el = document.querySelector(selector);
-    if (el) {
-      done(el.innerText.trim());
-    } else {
-      fail();
-    }
+    if (!el) return new Error("Element not found!");
+    return el.innerText.trim();
+  },
+  "element.attributes": function(payload) {
+    const selector = payload.selector;
+    const attributes = payload.attributes;
+    const el = document.querySelector(selector);
+    if (!el) return new Error("Element not found!");
+
+    const result = {};
+    _.map(el.attributes, (node) => {
+      var valid = true;
+      if (attributes) {
+        valid = valid || (_.isString(attributes) && node.nodeName != attributes);
+        valid = valid || (_.isArray(attributes) && attributes.indexOf(node.nodeName) < 0);
+      }
+      if (valid) {
+        result[node.nodeName] = node.nodeValue;
+      }
+    });
+    return result;
   }
 };

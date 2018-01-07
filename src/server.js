@@ -369,26 +369,25 @@ export default class Server {
   start() {
     return new Promise((resolve, reject) => {
       if (this.running) {
-        reject(new Error("Autopilot is already running"));
-        return;
+        this.logger.debug("Autopilot is already running");
+        return resolve();
       }
       if (!this.lastConnectedSocket || !this.lastConnectedSocket.connected) {
-        reject(new Error("No connected sockets"));
-        return;
+        return reject(new Error("No connected sockets"));
       }
       this.emit("server.beforeStart", this.lastConnectedSocket);
       this.lastConnectedSocket.emit("start");
       this.onSocketStart(this.lastConnectedSocket);
       this.emit("server.onStart", this.lastConnectedSocket);
-      resolve();
+      return resolve();
     });
   }
 
   stop() {
     return new Promise((resolve, reject) => {
       if (!this.running) {
-        reject(new Error("Autopilot is not running"));
-        return;
+        this.logger.debug("Autopilot is not running!");
+        return resolve();
       }
       const handleSocket = (cb) => {
         const socketId = Object.keys(this.sockets).pop();
@@ -404,7 +403,7 @@ export default class Server {
           // ignore error anyway, but log them for debugging purpose
           // edit: nvm, it's getting too verbose lol
           // this.defaultErrorHandler(err);
-          handleSocket(cb);
+          this.stopSocket(socketId).then(() => handleSocket(cb), reject);
         });
       };
       this.emit("server.beforeStop");

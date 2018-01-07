@@ -38,15 +38,19 @@ export default function (requestExternal) {
       }
     };
 
-    const result = callHandler();
-    if (result instanceof Error) {
-      fail(actions.error(action));
-    } else if (result !== undefined) {
-      done(result);
-    } else {
-      setTimeout(() => {
-        fail(new Error("Action '" + action + "' timed out after " + (timeout / 1000) + " sec(s)"));
-      }, timeout);
+    try {
+      const result = callHandler();
+      if (result instanceof Error) {
+        fail(action);
+      } else if (result !== undefined) {
+        done(result);
+      } else {
+        setTimeout(() => {
+          fail(new Error("Action '" + action + "' timed out after " + (timeout / 1000) + " sec(s)"));
+        }, timeout);
+      }
+    } catch (e) {
+      fail(e);
     }
   };
 }

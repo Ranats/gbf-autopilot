@@ -44,7 +44,7 @@ export default class WorkerManager {
 
     return new Promise((resolve, reject) => {
       if (this.running) {
-        return resolve();
+        return reject(new Error("Manager already running"));
       }
 
       const context = this.createContext();
@@ -62,11 +62,15 @@ export default class WorkerManager {
     });
   }
 
-  async stop() {
-    if (!this.running) return;
+  stop() {
+    return new Promise((resolve, reject) => {
+      if (!this.running) {
+        return reject(new Error("Manager not running"));
+      }
 
-    this.running = false;
-    return await this.server.stopSocket(this.socket.id);
+      this.running = false;
+      return this.server.stopSocket(this.socket.id).then(resolve, reject);
+    });
   }
 
   on(eventName, observer) {
