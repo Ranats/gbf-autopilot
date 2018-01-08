@@ -174,7 +174,7 @@ export default {
     }
     findElement();
   },
-  "element.text": function(payload, done, fail) {
+  "element.text": function(payload) {
     var selector = payload;
     if (_.isObject(payload)) {
       selector = payload.selector;

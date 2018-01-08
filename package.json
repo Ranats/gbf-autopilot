@@ -4,11 +4,12 @@
   "description": "Autopilot is an open source farming/grinding bot for Granblue Fantasy",
   "main": "server/server.js",
   "scripts": {
-    "start": "concurrently \"node server/server.js\" \"python controller/controller.py\"",
-    "config": "gulp config",
+    "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller.py\"",
     "build": "cross-env NODE_ENV=production gulp build",
-    "key": "python keygen.py",
-    "test": "mocha"
+    "lint": "eslint index.js server/index.js src/**/*.js",
+    "test": "mocha",
+    "config": "gulp config",
+    "key": "python keygen.py"
   },
   "author": "Frizz925 <Frizz925@hotmail.com>",
   "license": "MIT",
@@ -36,8 +37,9 @@
     "gulp-nodemon": "^2.2.1",
     "gulp-rename": "^1.2.2",
     "gulp-shell": "^0.6.3",
+    "gulp-sourcemaps": "^2.6.3",
     "gutil": "^1.6.4",
-    "mocha": "^3.5.0",
+    "mocha": "^4.1.0",
     "plugin-error": "^0.1.2",
     "webpack": "^2.6.1",
     "webpack-merge": "^4.1.0"

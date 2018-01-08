@@ -316,7 +316,7 @@ export default class Server {
             return;
           }
 
-          const error = eventData.error = new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`)
+          const error = eventData.error = new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`);
           this.emit("socket.timeoutSendAction", eventData, true);
           reject(error);
         }, timeout.timeoutInMs) : 0,
@@ -359,11 +359,13 @@ export default class Server {
 
   listen() {
     this.emit("server.beforeListening");
-    this.server.listen(this.port, "localhost", () => {
-      this.emit("server.onListening");
-      this.logger.debug("Started listening on localhost:" + this.port);
+    return new Promise((resolve) => {
+      this.server.listen(this.port, "localhost", () => {
+        this.emit("server.onListening");
+        this.logger.debug("Started listening on localhost:" + this.port);
+        resolve(this.server);
+      });
     });
-    return this;
   }
 
   start() {

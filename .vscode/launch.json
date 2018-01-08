@@ -10,7 +10,7 @@
       "request": "launch",
       "stopOnEntry": true,
       "pythonPath": "${config:python.pythonPath}",
-      "program": "${workspaceFolder}/controller/controller.py",
+      "program": "${workspaceFolder}/controller.py",
       "cwd": "${workspaceFolder}",
       "env": {},
       "envFile": "${workspaceFolder}/.env",
@@ -37,7 +37,7 @@
       "type": "node",
       "request": "launch",
       "sourceMaps": true,
-      "program": "${workspaceFolder}/server/server.js"
+      "program": "${workspaceFolder}/index.js"
     }
   ]
 }

@@ -4,7 +4,6 @@ const rename = require("gulp-rename");
 const nodemon = require("gulp-nodemon");
 const shell = require("gulp-shell");
 const livereload = require("gulp-livereload");
-const FileCache = require("gulp-file-cache");
 const resolve = require("path").resolve;
 
 // 2017-12-29: in response to gulp-util deprecation
@@ -47,7 +46,6 @@ const nodemonOptions = function(extras) {
   }, extras || {});
 };
 
-const cache = new FileCache();
 const globs = {
   server: [
     "./src/{server,lib}/**/*.js",
@@ -70,15 +68,13 @@ gulp.task("clean:server", function() {
   ]);
 });
 
-gulp.task("build:extension", gulp.series("clean:extension"), function(cb) {
+gulp.task("build:extension", gulp.series("clean:extension", function(cb) {
   webpack(webpackConfig, webpackCallback(cb));
-});
+}));
 
 gulp.task("build:server", gulp.series("clean:server", function() {
   return gulp.src(globs.server)
-    .pipe(cache.filter())
     .pipe(babel())
-    .pipe(cache.cache())
     .pipe(gulp.dest("./server/dist"));
 }));
 

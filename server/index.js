@@ -1,3 +1,4 @@
+require("babel-polyfill");
 const fs = require("fs");
 const resolve = require("path").resolve;
 const ini = require("ini");
@@ -36,15 +37,16 @@ const getServerClass = () => {
   if (process.env.NODE_ENV === "production") {
     return require("./dist/server").default;
   } else {
-    require("babel-polyfill");
     require("babel-register");
     return require("../src/server").default;
   }
 };
 
-readOptions().then((options) => {
-  const Server = getServerClass();
-  new Server(options, readOptions).listen();
-}, (err) => {
-  throw err;
-});
+module.exports = function() {
+  return readOptions().then((options) => {
+    const Server = getServerClass();
+    return new Server(options, readOptions).listen();
+  }, (err) => {
+    throw err;
+  });
+};

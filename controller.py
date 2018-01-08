@@ -2,7 +2,7 @@
 from flask import Flask, request
 from flask_cors import CORS
 from configparser import ConfigParser
-from gbf_autopilot import Window
+from controller import Window
 from threading import Thread
 
 import requests
@@ -15,14 +15,14 @@ import time
 import os
 
 config = ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__), '../config.ini'), encoding='utf-8')
+config.read('config.ini', encoding='utf-8')
 
 DEFAULT_PORT = int(config['Controller']['ListenerPort'])
 COMMAND_PORT = int(config['Server']['ListenerPort'])
 EXIT_KEY_CODE = int(config['Inputs']['ExitKeyCode'])
 
 log = logging.getLogger('werkzeug')
-logLevel = config['Log']['Level'].upper()
+logLevel = config['Debug']['LogLevel'].upper()
 if logLevel != 'DEBUG':
     log.setLevel(getattr(logging, logLevel))
 
