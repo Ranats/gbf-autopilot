@@ -1,3 +1,5 @@
+![Travis CI](https://travis-ci.org/Frizz925/gbf-autopilot.svg?branch=master)
+
 # Granblue Autopilot
 Granblue Autopilot is an open-source grinding/farming bot for Granblue Fantasy licensed under the [MIT License](LICENSE).
 
