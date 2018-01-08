@@ -47,7 +47,7 @@
     "axios": "^0.16.2",
     "body-parser": "^1.17.2",
     "express": "^4.15.3",
-    "gbf-autopilot-core": "github:frizz925/gbf-autopilot-core",
+    "gbf-autopilot-core": "github:Frizz925/gbf-autopilot-core",
     "immutable": "^3.8.2",
     "jquery": "^3.2.1",
     "lodash": "^4.17.4",
