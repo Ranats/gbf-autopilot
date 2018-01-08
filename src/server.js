@@ -32,8 +32,8 @@ export default class Server {
     this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
 
     // extension stuff
-    this.extensions = this.loadExtensions(options.extensionNames);
     this.coreExtension = coreExtension.server.call(this);
+    this.extensions = this.loadExtensions(options.extensionNames);
 
     this.refreshOptions(options);
     this.setupListeners();

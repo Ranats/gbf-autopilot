@@ -34,6 +34,7 @@ export default function ajaxInjection(context) {
   };
   XHR.prototype.open.toString = orig_open.toString.bind(orig_open);
 
+  /*
   const orig_send = XHR.prototype.send;
   XHR.prototype.send = function(data) {
     const xhrState = getXhrState(this);
@@ -41,6 +42,7 @@ export default function ajaxInjection(context) {
     return orig_send.apply(this, toArray(arguments));
   };
   XHR.prototype.send.toString = orig_send.toString.bind(orig_send);
+  */
 
   return subject;
 }
