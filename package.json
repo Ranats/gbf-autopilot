@@ -7,7 +7,7 @@
     "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller.py\"",
     "build": "cross-env NODE_ENV=production gulp build",
     "lint": "eslint index.js server/index.js src/**/*.js",
-    "test": "mocha",
+    "test": "cross-env NODE_ENV=production mocha",
     "config": "gulp config",
     "key": "python keygen.py"
   },
@@ -38,7 +38,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-shell": "^0.6.3",
     "gulp-sourcemaps": "^2.6.3",
-    "gutil": "^1.6.4",
     "mocha": "^4.1.0",
     "plugin-error": "^0.1.2",
     "webpack": "^2.6.1",
