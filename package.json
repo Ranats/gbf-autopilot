@@ -2,7 +2,8 @@
   "name": "gbf-autopilot",
   "version": "0.0.1",
   "description": "Autopilot is an open source farming/grinding bot for Granblue Fantasy",
-  "main": "server/server.js",
+  "repository": "github:Frizz925/gbf-autopilot",
+  "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller.py\"",
     "build": "cross-env NODE_ENV=production gulp build",

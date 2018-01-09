@@ -32,7 +32,7 @@ const webpackCallback = function(cb) {
 };
 const nodemonOptions = function(extras) {
   return Object.assign({
-    script: "./server/server.js",
+    script: "./index.js",
     watch: [
       "./src/lib/",
       "./src/server/", 
