@@ -37,9 +37,6 @@ const nodemonOptions = function(extras) {
       "./src/lib/",
       "./src/server/", 
       "./src/server.js",
-
-      // core plugins
-      "./node_modules/gbf-autopilot-core/build/index.js"
     ].map(function(path) {
       return resolve(__dirname, path);
     }),

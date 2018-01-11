@@ -8,7 +8,7 @@
     "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller.py\"",
     "build": "cross-env NODE_ENV=production gulp build",
     "lint": "eslint index.js server/index.js src/**/*.js",
-    "test": "cross-env NODE_ENV=production mocha",
+    "test": "mocha",
     "config": "gulp config",
     "key": "python keygen.py"
   },
