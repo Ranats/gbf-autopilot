@@ -6,3 +6,4 @@ __pycache__/
 *.log
 config.ini
 extensions.js
+watch.js

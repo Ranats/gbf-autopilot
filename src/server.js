@@ -399,14 +399,15 @@ export default class Server {
         }
 
         const socket = this.sockets[socketId];
-        socket.manager.stop().then(() => {
-          handleSocket(cb);
-        }, () => {
-          // ignore error anyway, but log them for debugging purpose
-          // edit: nvm, it's getting too verbose lol
-          // this.defaultErrorHandler(err);
-          this.stopSocket(socketId).then(() => handleSocket(cb), reject);
-        });
+        if (socket.manager.running) {
+          socket.manager.stop().then(() => {
+            handleSocket(cb);
+          }, reject);
+        } else {
+          this.stopSocket(socketId).then(() => {
+            handleSocket(cb);
+          }, reject);
+        }
       };
       this.emit("server.beforeStop");
       handleSocket(() => {

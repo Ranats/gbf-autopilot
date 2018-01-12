@@ -20,6 +20,7 @@
     "babel-loader": "^7.0.0",
     "babel-plugin-root-import": "^5.1.0",
     "babel-polyfill": "^6.26.0",
+    "babel-preset-bluebird": "^1.0.1",
     "babel-preset-env": "^1.6.1",
     "babel-preset-stage-0": "^6.24.1",
     "babel-register": "^6.26.0",
@@ -46,6 +47,7 @@
   },
   "dependencies": {
     "axios": "^0.16.2",
+    "bluebird": "^3.5.1",
     "body-parser": "^1.17.2",
     "express": "^4.15.3",
     "gbf-autopilot-core": "github:Frizz925/gbf-autopilot-core",

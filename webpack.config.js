@@ -10,7 +10,7 @@ var config = {
     contentscript: "./src/contentscript",
     external: "./src/external",
     popup: "./src/popup",
-    vendor: ["rxjs", "jquery", "lodash", "socket.io-client"]
+    vendor: ["rxjs", "jquery", "lodash", "bluebird", "socket.io-client"]
   },
   output: {
     filename: "[name].js",
