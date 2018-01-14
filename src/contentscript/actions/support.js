@@ -50,7 +50,7 @@ export default {
         (10 * Number(isMax)) +          // 10: maybe useless but check if it's fully uncapped
         (25 * level / 150) +            // 25: prioritize based on the level
         (50 * rank / 2) +               // 50: next prioritize between none, MLB, and FLB
-        (200 * base / summons.length);  // 200: the summon itself has the top priority
+        (200 * base);                   // 200: the summon itself has the top priority
       
       if (score > max) {
         element = $el.find(".prt-supporter-info")[0];

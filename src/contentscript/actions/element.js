@@ -71,13 +71,13 @@ export function translateElement(el, scroll) {
     }
     var result = translateElements(el);
     if (!result) {
-      reject();
+      reject(new Error("Element not found"));
       return;
     }
 
     const rect = result.rects[0];
     if (!rect) {
-      reject();
+      reject(new Error("Element boundary not found"));
       return;
     }
 

@@ -173,9 +173,9 @@ export default class Server {
       const manager = new WorkerManager(this, socket, worker);
       const context = manager.context;
 
-      const errorHandler = (err) => {
-        this.emit("worker.error", {context, error: err});
-        this.defaultErrorHandler(err);
+      const errorHandler = (error) => {
+        this.emit("worker.error", {context, error});
+        this.defaultErrorHandler(error);
         this.stop().then(noop, ::this.defaultErrorHandler);
       };
 
