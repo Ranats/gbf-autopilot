@@ -54,50 +54,11 @@ Your browser should have the bot's grayscaled icon on the Chrome menu. Open the 
 ### Stopping the bot
 You can either click the bot icon again and click the *Stop* button to stop the bot. Or, if the bot still takes control of your mouse and keyboard, you can spam press the *exit key* (default to F1) until the bot stops.
 
-## Main vs Core extension codebase
-The codebase for the bot has been rewritten and now separated into two repositories: [main](https://github.com/Frizz925/gbf-autopilot) and [core extension](https://github.com/Frizz925/gbf-autopilot-core). This allows the bot codebase to be much more easy to maintain and provides better extensibility for the bot itself.
-
-What the main codebase contains:
-- Chrome extension as a websocket client for communicating with the browser.
-- Python webserver as the input controller (eg. mouse and keyboard) through Win32 API and makes it tightly coupled with the OS.
-- Node.js as the main application. This part is only responsible for bridging communication between the browser and the input controller, and only calls the main logic from its extensions.
-
-What the core extension codebase contains:
-- All of the bot's main logic itself
-- Lua script runner
-
-## Extensions
-Some of the built-in features of the bot (eg. pokerbot) have been removed from the main codebase and are either available or still in progress as a separate extension.
-
-Here are some examples of the available extensions:
-- [Poker](https://github.com/Frizz925/gbf-autopilot-poker)
-- [Rise of the Beasts](https://github.com/Frizz925/gbf-autopilot-rotb)
-
-And here are the previously available features in the bot and were removed to be written as a separate extension:
-- Chatbot ([Line](https://line.me/))
-- Raid queue (leech bot)
-
-## How to install extensions
-You can easily install extensions using Node.js package manager, npm. This example will take the [poker extension](https://github.com/Frizz925/gbf-autopilot-poker) for installation.
-
-Install the extension from GitHub repository using npm.
-```sh
-npm install Frizz925/gbf-autopilot-poker
-```
-
-Create a file *extensions.js* in the bot's main directory if you haven't already.
-```js
-// Array of extensions by its package name to load
-module.exports = ["gbf-autopilot-poker"];
-```
-
-The extension configuration shares the same file as your main configuration file (*config.ini*) in the bot's main directory. The configuration for the poker extension is already included in your default *config.ini* file under the *PokerMode* section.
-
 ## Issues
 The current code base is still in alpha stage and may have many breaking changes, bugs, and other issues. You can request a feature by [opening a new issue](https://github.com/Frizz925/gbf-autopilot/issues/new) in this repository.
 
 **Where should the bug reports and other issues go?**  
-Make sure you have read the [Main vs Core extension codebase](#Main-vs-Core-extension-codebase) part to understand which codebase belongs to which repository.
+Make sure you have read the [Main vs Core extension codebase](https://github.com/Frizz925/gbf-autopilot/wiki/Main-vs-Core-extension-codebase) part to understand which codebase belongs to which repository.
 
 Example of issues that may belong to the **main** repository:
 - Incorrect mouse position
