@@ -25,7 +25,7 @@ export default {
       summons: {}
     };
 
-    const handleSkill = (root, el) => {
+    const handleSkill = (root, el, parent) => {
       const id = Number(el.getAttribute("ability-id"));
       if (!id) return;
 
@@ -52,7 +52,7 @@ export default {
         type: el.getAttribute("type").split(",").map((type) => type.trim()),
         name: el.getAttribute("ability-name"),
         description, cooldown, effect,
-        available: root.className.indexOf("ability-disable") == -1 && cooldown.current == 0,
+        available: parent.className.indexOf("ability-disable") == -1 && cooldown.current == 0,
       };
 
       charaState[skill] = skillState;
@@ -60,8 +60,8 @@ export default {
     };
 
     forEach(els, (root) => {
-      forEach(root.querySelectorAll(".lis-ability > div:first-child"), (el) => {
-        handleSkill(root, el);
+      forEach(root.querySelectorAll(".lis-ability"), (el) => {
+        handleSkill(root, el.querySelector("div:first-child"), el);
       });
     });
 

@@ -41,7 +41,7 @@ export default function (requestExternal) {
     try {
       const result = callHandler();
       if (result instanceof Error) {
-        fail(action);
+        fail(result);
       } else if (result !== undefined) {
         done(result);
       } else {

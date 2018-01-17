@@ -33,7 +33,8 @@ export default class WorkerManager {
   }
 
   start() {
-    const stop = (context, result) => {
+    var context;
+    const stop = (result) => {
       context.result = result;
       this.emit("beforeStop", context);
       this.running = false;
@@ -47,18 +48,18 @@ export default class WorkerManager {
         return reject(new Error("Manager already running"));
       }
 
-      const context = this.createContext();
+      context = this.createContext();
       this.emit("beforeStart", context);
       this.running = true;
-      this.resolveLater = context.finish = resolve.bind(resolve, context);
-      this.rejectLater = context.error = reject.bind(reject, context);
+      this.resolveLater = context.finish = resolve;
+      this.rejectLater = context.error = reject;
       this.emit("start", context);
-    }).then((context, result) => {
-      stop(context, result);
+    }).then((result) => {
+      stop(result);
       return result;
-    }, (context, err) => {
-      stop(context, err);
-      throw err;
+    }, (error) => {
+      stop(error);
+      throw error;
     });
   }
 

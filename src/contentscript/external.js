@@ -19,14 +19,14 @@ export default function external(context, extensionUrl, env) {
     }
   };
 
+  executeScript(extensionUrl + "dist/vendor.js", () => {
+    executeScript(extensionUrl + "dist/external.js", () => {});
+  });
+
   const portSetup = (evt) => {
     if (!evt.data.token || evt.data.token !== EXTERNAL_TOKEN) return;
-    executeScript(extensionUrl + "dist/vendor.js", () => {
-      executeScript(extensionUrl + "dist/external.js", () => {
-        window[EXTERNAL_TOKEN](context, evt.ports[0]);
-        delete window[EXTERNAL_TOKEN];
-      });
-    });
+    window[EXTERNAL_TOKEN](context, evt.ports[0]);
+    delete window[EXTERNAL_TOKEN];
 
     evt.preventDefault();
     evt.stopImmediatePropagation();

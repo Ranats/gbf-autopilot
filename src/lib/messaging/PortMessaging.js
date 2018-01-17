@@ -1,5 +1,6 @@
 import _ from "lodash";
 import shortid from "shortid";
+import Promise from "bluebird";
 
 export default class PortMessaging {
   constructor() {

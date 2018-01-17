@@ -12,6 +12,13 @@ const log = require("fancy-log");
 const PluginError = require("plugin-error");
 const del = require("del");
 
+var extensionWatchPath = [];
+try {
+  extensionWatchPath = require("./watch");
+} catch (e) {
+  // do nothing
+}
+
 const webpack = require("webpack");
 const webpackConfig = require("./webpack.config");
 const webpackCallback = function(cb) {
@@ -37,7 +44,7 @@ const nodemonOptions = function(extras) {
       "./src/lib/",
       "./src/server/", 
       "./src/server.js",
-    ].map(function(path) {
+    ].concat(extensionWatchPath).map(function(path) {
       return resolve(__dirname, path);
     }),
   }, extras || {});

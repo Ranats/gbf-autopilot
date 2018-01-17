@@ -71,13 +71,13 @@ export function translateElement(el, scroll) {
     }
     var result = translateElements(el);
     if (!result) {
-      reject();
+      reject(new Error("Element not found"));
       return;
     }
 
     const rect = result.rects[0];
     if (!rect) {
-      reject();
+      reject(new Error("Element boundary not found"));
       return;
     }
 
@@ -191,10 +191,10 @@ export default {
 
     const result = {};
     _.map(el.attributes, (node) => {
-      var valid = true;
+      var valid = false;
       if (attributes) {
-        valid = valid || (_.isString(attributes) && node.nodeName != attributes);
-        valid = valid || (_.isArray(attributes) && attributes.indexOf(node.nodeName) < 0);
+        valid = valid || (_.isString(attributes) && node.nodeName == attributes);
+        valid = valid || (_.isArray(attributes) && attributes.indexOf(node.nodeName) >= 0);
       }
       if (valid) {
         result[node.nodeName] = node.nodeValue;

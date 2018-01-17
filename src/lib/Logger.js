@@ -26,7 +26,7 @@ function createFileTransport(config, level) {
 }
 
 export default function(config) {
-  const level = config.Debug.Level || "debug";
+  const level = config.Debug.LogLevel || "debug";
   const transports = [];
   
   if (config.Debug.LogToOutput) {
