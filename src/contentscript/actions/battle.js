@@ -1,23 +1,23 @@
 import forEach from "lodash/forEach";
 
 export default {
-  "battle.count": function(arg, done) {
+  "battle.count": function() {
     const el = document.querySelector(".prt-battle-num > .txt-info-num > div:first-child");
     if (el && el.className.indexOf("num-info") >= 0) {
-      done(Number(el.className.substr(-1)));
+      return Number(el.className.substr(-1));
     } else {
-      done(1);
+      return 1;
     }
   },
-  "battle.state": function(arg, done, fail) {
+  "battle.state": function() {
     const els = document.querySelectorAll(".prt-command-chara[pos]");
     if (els.length <= 0) {
-      fail(new Error("Skill elements not found!"));
+      return new Error("Skill elements not found!");
     }
 
     const summonEls = document.querySelectorAll(".lis-summon");
     if (summonEls.length <= 0) {
-      fail(new Error("Summon elements not found!"));
+      return new Error("Summon elements not found!");
     }
 
     const state = {
@@ -91,6 +91,6 @@ export default {
       state.summons[pos] = summonState;
     });
 
-    done(state);
+    return state;
   }
 };

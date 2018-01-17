@@ -81,5 +81,17 @@ export default (context) => ({
       options.url = normalizeUrl(context, options.url, true);
       ajaxFallback(context, options, success, error);
     }
+  },
+  "battle.potion": (arg, done) => {
+    const gs = (context.stage || {}).gGameStatus || {};
+    done({
+      normal: gs.temporary,
+      event: gs.event,
+      full: gs.potion
+    });
+  },
+  "battle.assist": (arg, done) => {
+    const gs = (context.stage || {}).gGameStatus || {};
+    done(gs.assist);
   }
 });
