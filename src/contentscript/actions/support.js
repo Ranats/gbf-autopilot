@@ -62,7 +62,7 @@ export default {
       // start calculating score
       const summon = getSummon(id, name);
       const index = summon.index;
-      const base = index >= 0 ? summons.length - index : 0;
+      const base = (index >= 0 ? summons.length - index : 0) * (rank >= summon.rank ? 1 : 0);
       // calculate from variables with least priority
       const score = (5 * plus / 99) +   // 5: start from the plus mark
         (10 * Number(isMax)) +          // 10: maybe useless but check if it's fully uncapped
