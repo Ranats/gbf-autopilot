@@ -6,22 +6,31 @@ import {translateElement} from "./element";
 
 export default {
   "support": function(summons, done, fail) {
+    summons = summons.map((summon, index) => {
+      const parts = summon.split("_");
+      return {
+        index,
+        name: parts[0],
+        rank: parts[1] || 0
+      };
+    });
+
     const supporters = $(".prt-supporter-attribute:not(.disableView) > .btn-supporter");
-    const getSummonIndex = (id, name) => {
-      var summonIndex = -1;
-      forEach(summons, (summon, idx) => {
-        const validId = isNumber(summon) && parseInt(summon) === id;
-        const validName = isString(summon) && name.toLowerCase().indexOf(summon.toLowerCase()) >= 0;
+    const getSummon = (id, name) => {
+      var selectedSummon;
+      forEach(summons, (summon) => {
+        const validId = isNumber(summon.id) && parseInt(summon.id) === id;
+        const validName = isString(summon.id) && name.toLowerCase().indexOf(summon.id.toLowerCase()) >= 0;
         const valid = validId || validName;
         if (valid) {
-          summonIndex = idx;
+          selectedSummon = summon;
           return false;
         }
       });
-      return summonIndex;
+      return selectedSummon;
     };
 
-    var element, selectedName, max = 0;
+    var element, selectedName, selectedRank, max = 0, preferred = true;
     supporters.each((idx, el) => {
       const $el = $(el);
 
@@ -43,7 +52,8 @@ export default {
       const plus = $quality.length ? Number($quality.text().trim().substr(1)) : 0;
 
       // start calculating score
-      const index = getSummonIndex(id, name);
+      const summon = getSummon(id, name);
+      const index = summon.index;
       const base = index >= 0 ? summons.length - index : 0;
       // calculate from variables with least priority
       const score = (5 * plus / 99) +   // 5: start from the plus mark
@@ -53,8 +63,10 @@ export default {
         (200 * base);                   // 200: the summon itself has the top priority
       
       if (score > max) {
-        element = $el.find(".prt-supporter-info")[0];
         selectedName = name;
+        selectedRank = rank;
+        preferred = index >= 0 && rank >= summon.rank;
+        element = $el.find(".prt-supporter-info")[0];
         max = score;
       }
     });
@@ -65,7 +77,9 @@ export default {
 
     translateElement(element, true).then((payload) => {
       console.log("Selected support: '" + selectedName + "' with score " + max, element, payload);
+      payload.preferred = preferred;
       payload.summon = selectedName;
+      payload.rank = selectedRank;
       payload.score = max;
       done(payload);
     }, fail);
