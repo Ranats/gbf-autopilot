@@ -10,14 +10,19 @@ export default {
       const parts = summon.split("_");
       return {
         index,
-        name: parts[0],
+        id: parts[0],
         rank: parts[1] || 0
       };
     });
 
     const supporters = $(".prt-supporter-attribute:not(.disableView) > .btn-supporter");
     const getSummon = (id, name) => {
-      var selectedSummon;
+      var selectedSummon = {
+        index: -1,
+        id: "none",
+        rank: 0
+      };
+
       forEach(summons, (summon) => {
         const validId = isNumber(summon.id) && parseInt(summon.id) === id;
         const validName = isString(summon.id) && name.toLowerCase().indexOf(summon.id.toLowerCase()) >= 0;
@@ -27,10 +32,13 @@ export default {
           return false;
         }
       });
+
       return selectedSummon;
     };
 
-    var element, selectedName, selectedRank, max = 0, preferred = true;
+    var element;
+    var selectedId, selectedName, selectedRank;
+    var max = 0, preferred = true;
     supporters.each((idx, el) => {
       const $el = $(el);
 
@@ -63,6 +71,7 @@ export default {
         (200 * base);                   // 200: the summon itself has the top priority
       
       if (score > max) {
+        selectedId = id;
         selectedName = name;
         selectedRank = rank;
         preferred = index >= 0 && rank >= summon.rank;
@@ -77,6 +86,7 @@ export default {
 
     translateElement(element, true).then((payload) => {
       console.log("Selected support: '" + selectedName + "' with score " + max, element, payload);
+      payload.summonId = selectedId;
       payload.preferred = preferred;
       payload.summon = selectedName;
       payload.rank = selectedRank;

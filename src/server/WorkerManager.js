@@ -88,7 +88,8 @@ export default class WorkerManager {
     return this;
   }
 
-  process(context, pipeline, lastResult) {
+  process(context, pipeline, lastResult, runner) {
+    runner = runner || ::this.run;
     return new Promise((resolve, reject) => {
       const step = pipeline.shift();
       if (!step || !context.isRunning()) {
@@ -99,8 +100,8 @@ export default class WorkerManager {
         }
       }
 
-      return this.run(context, step, lastResult).then((result) => {
-        return this.process(context, pipeline, result);
+      return runner(context, step, lastResult).then((result) => {
+        return this.process(context, pipeline, result, runner);
       }).then(resolve, reject);
     });
   }
