@@ -10,10 +10,11 @@ export default {
 
     summons = summons.map((summon, index) => {
       const parts = summon.trim().split("_");
+      const [id, rank] = parts;
       return {
         index,
-        id: parts[0],
-        rank: parts[1] || 0
+        id: !isNaN(id) ? Number(id) : id,
+        rank: rank || 0
       };
     });
 
