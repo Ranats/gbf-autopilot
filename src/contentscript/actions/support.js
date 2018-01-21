@@ -6,8 +6,10 @@ import {translateElement} from "./element";
 
 export default {
   "support": function(summons, done, fail) {
+    if (isString(summons)) summons = summons.split(",");
+
     summons = summons.map((summon, index) => {
-      const parts = summon.split("_");
+      const parts = summon.trim().split("_");
       return {
         index,
         id: parts[0],
