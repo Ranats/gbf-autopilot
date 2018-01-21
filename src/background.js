@@ -130,6 +130,9 @@ const startAutopilot = (doNotEmit) => {
         socket.emit("action", {id, action, payload, type: "response"});
       },
       fail(payload) {
+        if (payload instanceof Error) {
+          payload = payload.toString();
+        }
         socket.emit("action.fail", {id, action, payload, type: "response"});
       }
     };

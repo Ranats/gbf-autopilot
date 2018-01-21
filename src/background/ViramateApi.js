@@ -26,10 +26,14 @@ export default class ViramateApi {
     const promise = this.pending[evt.data.id];
     if (!promise) return;
 
-    if (evt.data.result && evt.data.result.error) {
-      promise.reject(evt.data.result);     
+    if (evt.data.result) {
+      if (evt.data.result.error) {
+        promise.reject(new Error(evt.data.result.error));
+      } else {
+        promise.resolve(evt.data.result);
+      }
     } else {
-      promise.resolve(evt.data.result);
+      promise.reject(new Error(JSON.stringify(evt.data)));
     }
 
     delete this.pending[evt.data.id];
