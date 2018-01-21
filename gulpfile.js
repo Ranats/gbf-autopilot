@@ -58,31 +58,31 @@ const globs = {
   extension: "./extension/pages/**/*.html"
 };
 
-gulp.task("clean:extension", function() {
+gulp.task("clean:extension", function cleanExtension() {
   return del([
     "extension/dist/**/*.*",
     "!extension/dist/.gitignore"
   ]);
 });
 
-gulp.task("clean:server", function() {
+gulp.task("clean:server", function cleanServer() {
   return del([
     "server/dist/**/*.*",
     "!server/dist/.gitignore"
   ]);
 });
 
-gulp.task("build:extension", gulp.series("clean:extension", function(cb) {
+gulp.task("build:extension", gulp.series("clean:extension", function buildExtension(cb) {
   webpack(webpackConfig, webpackCallback(cb));
 }));
 
-gulp.task("build:server", gulp.series("clean:server", function() {
+gulp.task("build:server", gulp.series("clean:server", function buildServer() {
   return gulp.src(globs.server)
     .pipe(babel())
     .pipe(gulp.dest("./server/dist"));
 }));
 
-gulp.task("watch:extension", function(cb) {
+gulp.task("watch:extension", function watchExtension(cb) {
   const config = Object.assign({}, webpackConfig, {
     watch: true
   });
@@ -90,18 +90,18 @@ gulp.task("watch:extension", function(cb) {
   livereload.listen();
 });
 
-gulp.task("watch:server", function(done) {
+gulp.task("watch:server", function watchServer(done) {
   gulp.watch(globs.server.src, gulp.series("build:server"));
   done();
 });
 
 gulp.task("build", gulp.series("build:server", "build:extension"));
 gulp.task("watch", gulp.series("build:extension", "watch:extension"));
-gulp.task("serve", gulp.series("build:server", function(done) {
+gulp.task("serve", function serve(done) {
   nodemon(nodemonOptions());
   done();
-}));
-gulp.task("serve:debug", gulp.series("build:server", function(done) {
+});
+gulp.task("serve:debug", gulp.series("build:server", function serveDebug(done) {
   nodemon(nodemonOptions({
     exec: "node --inspect-brk",
     debug: true,
@@ -114,7 +114,7 @@ gulp.task("serve2", shell.task([
   "concurrently \"gulp serve\" \"python controller/controller.py\""
 ]));
 
-gulp.task("config", function() {
+gulp.task("config", function config() {
   return gulp.src("./{extension,.}/*.sample.{json,ini}")
     .pipe(rename(function(path) {
       const suffix = ".sample";
