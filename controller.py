@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-from flask import Flask, request
-from flask_cors import CORS
 from configparser import ConfigParser
 from controller import Window
 from threading import Thread
+
+from werkzeug.wrappers import Request, Response
+from werkzeug.serving import run_simple
+
+from jsonrpc import JSONRPCResponseManager, dispatcher
 
 import requests
 import pyautogui
@@ -35,75 +38,8 @@ window = Window({
     'MouseClickRandomDelay': float(config['Inputs']['RandomDelayInMsBetweenMouseDownAndUp']),
     'MouseTween': getattr(pyautogui, config['Controller']['MouseTween'])
 })
-app = Flask(__name__)
-CORS(app)
 
-def elementRect(json):
-    return (json['x'], json['y'], json['width'], json['height'])
-
-def windowRect(json):
-    return (0, 0, json['window']['width'], json['window']['height'])
-
-@app.route('/start', methods=['POST'])
-def start():
-    global commandStarted
-    if not commandStarted:
-        commandStarted = True
-        print('Command started')
-    return 'OK'
-
-@app.route('/stop', methods=['POST'])
-def stop():
-    global commandStarted
-    if commandStarted:
-        commandStarted = False
-        print('Command stopped')
-    return 'OK'
-
-def doClick(json, clicks=1):
-    if not commandStarted:
-        return 'Command server not started', 400
-    try:
-        window.click(
-            elementRect(json),
-            windowRect(json),
-            clicks=clicks
-        )
-        return 'OK', 200
-    except ValueError as e:
-        return str(e), 500
-
-@app.route('/click', methods=['POST'])
-def click():
-    json = request.json
-    return doClick(json)
-
-@app.route('/click/immediate', methods=['POST'])
-def clickImmediate():
-    if not commandStarted:
-        return 'Command server not started', 400
-    window.click()
-    return 'OK'
-
-@app.route('/dblclick', methods=['POST'])
-def dblclick():
-    json = request.json
-    return doClick(json, 2)
-
-@app.route('/move', methods=['POST'])
-def move():
-    json = request.json
-    if not commandStarted:
-        return 'Command server not started', 400
-    window.moveTo(
-        elementRect(json),
-        windowRect(json)
-    )
-    return 'OK'
-
-@app.route('/key/press', methods=['POST'])
-def keyPress():
-    json = request.json
+def keyPress(json):
     key = str(json['key']).lower()
     vkCode = win32api.VkKeyScan(key)
     scanCode = win32api.MapVirtualKey(vkCode, 0)
@@ -142,4 +78,3 @@ def listenForEscape():
 
 if __name__ == '__main__':
     listenForEscape()
-    app.run(host='localhost', port=DEFAULT_PORT)
