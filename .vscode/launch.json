@@ -10,13 +10,34 @@
       "request": "launch",
       "stopOnEntry": true,
       "pythonPath": "${config:python.pythonPath}",
-      "program": "${workspaceFolder}/controller.py",
+      "program": "${file}",
       "cwd": "${workspaceFolder}",
       "env": {},
       "envFile": "${workspaceFolder}/.env",
       "debugOptions": [
         "RedirectOutput"
       ]
+    },
+    {
+      "name": "Python: Launch server",
+      "type": "python",
+      "request": "launch",
+      "stopOnEntry": true,
+      "pythonPath": "${config:python.pythonPath}",
+      "program": "${workspaceFolder}/server.py",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "envFile": "${workspaceFolder}/.env",
+      "debugOptions": [
+        "RedirectOutput"
+      ]
+    },
+    {
+      "name": "Node",
+      "type": "node",
+      "request": "launch",
+      "sourceMaps": true,
+      "program": "${workspaceFolder}/index.js"
     },
     {
       "name": "Node: Attach",
@@ -33,11 +54,19 @@
       "port": 9229
     },
     {
-      "name": "Node",
       "type": "node",
       "request": "launch",
-      "sourceMaps": true,
-      "program": "${workspaceFolder}/index.js"
+      "name": "Node: Mocha Tests",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-u",
+        "tdd",
+        "--timeout",
+        "999999",
+        "--colors",
+        "${workspaceFolder}/test/server/**/*.js"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }

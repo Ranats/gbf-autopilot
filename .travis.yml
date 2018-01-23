@@ -1,8 +1,16 @@
-language: node_js
-node_js:
-  - "8"
-script:
-  - npm run lint
-  - npm run build
-  - npm run config
-  - npm test
+matrix:
+  include:
+    - language: node_js
+      node_js: 8
+      script:
+        - npm run lint:js
+        - npm run build
+        - npm run config
+        - npm run test:server
+    - language: python
+      python: 3.6
+      env:
+        - GBF_AUTOPILOT_USE_DUMMY_WINDOW=1
+      script:
+        - python -m pylint controller test
+        - python -m nose test

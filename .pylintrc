@@ -182,7 +182,7 @@ attr-naming-style=snake_case
 
 # Regular expression matching correct attribute names. Overrides attr-naming-
 # style
-#attr-rgx=
+attr-rgx=^[a-z_][a-z1-9_]{1,20}
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,
@@ -224,12 +224,12 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,
-           j,
-           k,
+good-names=i, j, k,
            ex,
            Run,
-           _
+           _,
+           x, y, z,
+           err
 
 # Include a hint for the correct naming format with invalid-name
 include-naming-hint=no
@@ -272,7 +272,7 @@ variable-naming-style=snake_case
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style
-#variable-rgx=
+variable-rgx=^([a-z_]{1,2}|[a-z][1-9]|[a-z_][a-z_]{2,30})$
 
 
 [FORMAT]
@@ -395,7 +395,7 @@ ignored-classes=optparse.Values,thread._local,_thread._local
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis. It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=
+ignored-modules=pywin32, win32gui, win32con, win32api
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.
