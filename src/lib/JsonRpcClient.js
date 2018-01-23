@@ -22,15 +22,13 @@ export default function JsonRpcClient(port, host, path) {
       return new URL(path, `http://${this.host}:${this.port}`);
     },
 
-    request(method, arg, ...args) {
-      var params = [];
+    request(method, ...args) {
+      var params = null;
       if (args.length > 0) {
-        params = [arg].concat(args);
-      } else {
-        if (typeof arg === "object") {
-          params = arg;
+        if (args.length > 1) {
+          params = args;
         } else {
-          params = [arg];
+          params = args[0];
         }
       }
 

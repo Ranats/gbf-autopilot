@@ -9,18 +9,19 @@ import pyautogui
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
 
-from controller.jsonrpc import RequestErrorException
+from controller.jsonrpc import RequestErrorException, request_error
 from controller.window import Window
 from controller import JsonRpcMethods, JsonRpcClient, InputController
 
 class ControllerServer:
     def __init__(self, controller, config):
         self.controller = controller
+        self.window = controller.window
         self.config = config
         self.logger = logging.getLogger('werkzeug')
         self.log_level = config['Debug']['LogLevel'].upper()
-        self.json_rpc_methods = JsonRpcMethods(controller)
-        self.json_rpc_client = None
+        self.jsonrpc_methods = JsonRpcMethods(controller)
+        self.jsonrpc_client = None
 
         self.running = False
         self.listeners = {}
@@ -33,13 +34,14 @@ class ControllerServer:
             self.logger.setLevel(getattr(logging, self.log_level))
 
     def setup_listeners(self):
-        self.json_rpc_methods.add_method('start', self.on_start)
-        self.json_rpc_methods.add_method('stop', self.on_stop)
+        self.jsonrpc_methods.add_method('start', self.on_start)
+        self.jsonrpc_methods.add_method('stop', self.on_stop)
 
     def on_start(self):
         if self.running:
             raise RequestErrorException('Controller already running')
         self.running = True
+        self.window.listen_for_escape(self.stop_command_server)
         return 'OK'
 
     def on_stop(self):
@@ -51,21 +53,28 @@ class ControllerServer:
     def stop_command_server(self):
         print('Stopping command server...')
         try:
-            self.json_rpc_client.stop()
+            self.jsonrpc_client.stop()
             self.running = False
             print('Command server stopped')
         except requests.HTTPError:
             print('Failed to stop the command server!')
 
-    def listen(self, port, command_port):
-        self.json_rpc_client = JsonRpcClient(command_port)
+    def listen(self, port, command_port, command_endpoint):
+        self.jsonrpc_client = JsonRpcClient(command_port, path=command_endpoint)
         run_simple('localhost', port, self.application)
 
     @Request.application
     def application(self, request):
         data = request.data.decode('utf-8')
         data = json.loads(data)
-        data = self.json_rpc_methods.handle_request(data)
+        self.logger.debug(data)
+
+        method = data['method']
+        if self.running or method in self.jsonrpc_methods.methods:
+            data = self.jsonrpc_methods.handle_request(data)
+        else:
+            data = request_error(data['id'], 'Controller not running!')
+
         return Response(json.dumps(data), mimetype='application/json')
 
 def read_config(filename):
@@ -77,6 +86,7 @@ def main():
     config = read_config('config.ini')
     controller_port = int(config['Controller']['ListenerPort'])
     command_port = int(config['Server']['ListenerPort'])
+    command_endpoint = config['Server']['JsonRpcEndpoint']
     window = Window({
         'Language': config['General']['Language'].lower(),
         'MouseSpeed': float(config['Inputs']['MouseSpeed']),
@@ -87,7 +97,7 @@ def main():
         'ExitKeyCode': int(config['Inputs']['ExitKeyCode'])
     })
     controller = InputController(window)
-    ControllerServer(controller, config).listen(controller_port, command_port)
+    ControllerServer(controller, config).listen(controller_port, command_port, command_endpoint)
 
 if __name__ == '__main__':
     main()

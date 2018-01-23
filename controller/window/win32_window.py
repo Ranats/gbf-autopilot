@@ -31,7 +31,7 @@ class Win32Window(AbstractWindow):
         return (left, top, right - left, bottom - top)
 
     def key_press(self, key):
-        vk_code = win32api.VkKeyScan(key)
+        vk_code = win32api.VkKeyScan(str(key))
         scan_code = win32api.MapVirtualKey(vk_code, 0)
         win32api.keybd_event(vk_code, scan_code, 0, 0)
         win32api.keybd_event(vk_code, scan_code, 2, 0)

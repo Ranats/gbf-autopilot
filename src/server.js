@@ -41,6 +41,21 @@ export default class Server {
     // controller stuff
     this.controller = new JsonRpcClient(this.controllerPort);
 
+    // JSON-RPC stuff
+    this.methods = {
+      "start": () => {
+        this.logger.debug("Got start request from webhook");
+        return this.start().then(() => "OK");
+      },
+      "stop": () => {
+        this.logger.debug("Got stop request from webhook");
+        return this.stop().then(() => "OK");
+      },
+      "sockets": () => {
+        return Object.keys(this.sockets).join(", ");
+      }
+    };
+
     this.refreshOptions(options);
     this.setupListeners();
     this.setupStates();
@@ -103,29 +118,16 @@ export default class Server {
     this.server = http.Server(this.app);
     this.io = SocketIO(this.server);
 
-    this.setupJsonRpc();
     this.setupExpress(this.app);
     this.setupSocket(this.io);
+    this.setupJsonRpc();
   }
 
   setupJsonRpc() {
-    this.jsonRpc = new JsonRpcServer(this.server, {
-      "start": () => {
-        this.logger.debug("Got start request from webhook");
-        return this.start().then(() => "OK");
-      },
-      "stop": () => {
-        this.logger.debug("Got stop request from webhook");
-        return this.stop().then(() => "OK");
-      },
-      "sockets": () => {
-        return Object.keys(this.sockets).join(", ");
-      }
-    });
+    this.jsonRpc = new JsonRpcServer(this.app, this.methods, this.config.Server.JsonRpcEndpoint);
   }
 
   setupExpress(app) {
-    const jsonRpcMethods = this.jsonRpc.methods;
     const defaultResponse = (res, promise) => {
       promise.then(() => {
         res.end("OK");
@@ -141,13 +143,13 @@ export default class Server {
     app.use(bodyParser.text());
     app.use(bodyParser.json());
     app.post("/start", (req, res) => {
-      defaultResponse(res, jsonRpcMethods.start());
+      defaultResponse(res, this.methods.start());
     });
     app.post("/stop", (req, res) => {
-      defaultResponse(res, jsonRpcMethods.stop());
+      defaultResponse(res, this.methods.stop());
     });
     app.get("/sockets", (req, res) => {
-      res.end(jsonRpcMethods.sockets());
+      res.end(this.methods.sockets());
     });
 
     this.emit("express.afterSetup", app);
@@ -235,7 +237,7 @@ export default class Server {
         });
       });
 
-      this.makeRequest("start").then(() => {
+      this.controller.start().then(() => {
         this.running = true;
         this.logger.info("Autopilot started.");
         return manager.start();
@@ -428,7 +430,7 @@ export default class Server {
       const handleSocket = (cb) => {
         const socketId = Object.keys(this.sockets).pop();
         if (!socketId) {
-          this.makeRequest("stop").then(cb, ::this.defaultErrorHandler);
+          this.controller.stop().then(cb, ::this.defaultErrorHandler);
           return;
         }
 

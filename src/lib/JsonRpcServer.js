@@ -1,11 +1,11 @@
 export const JSONRPC_VERSION = "2.0";
 
 export default class JsonRpcServer {
-  constructor(server, methods, path) {
-    this.server = server;
+  constructor(app, methods, path) {
+    this.app = app;
     this.methods = methods;
     this.path = path || "/";
-    // this.server.on("request", ::this.handleRequest);
+    this.setupEndpoint();
   }
 
   success(id, result) {
@@ -27,38 +27,32 @@ export default class JsonRpcServer {
     });
   }
 
-  handleBody(res, body) {
-    const json = JSON.stringify(body);
-    const {id, method, params} = json;
+  handleRequest(req, res) {
+    const {id, method, params} = req.body;
     const methodFunc = this.methods[method];
     if (!methodFunc) {
       return res.end(this.error(id, 404, "Method unknown"));
     }
 
     const result = methodFunc(params);
-    if (result instanceof Promise) {
-      return result.then((result) => {
-        return this.success(id, result);
-      }, (err) => {
-        return this.error(id, err);
-      }).then((json) => res.end(json));
-    } else if (result instanceof Error) {
-      return res.end(this.error(id, result));
-    } else {
-      return res.end(this.success(id, result));
+    try {
+      if (result instanceof Promise) {
+        return result.then((result) => {
+          return this.success(id, result);
+        }, (err) => {
+          return this.error(id, err);
+        }).then((json) => res.end(json));
+      } else if (result instanceof Error) {
+        return res.end(this.error(id, result));
+      } else {
+        return res.end(this.success(id, result));
+      }
+    } catch (err) {
+      return res.end(this.error(id, err));
     }
   }
 
-  handleRequest(req, res) {
-    if (req.method != "POST" || req.url != this.path) {
-      return;
-    }
-
-    const data = [];
-    req.on("data", (chunk) => data.push(chunk))
-      .on("end", () => {
-        const body = Buffer.concat(data).toString();
-        this.handleBody(res, body);
-      });
+  setupEndpoint() {
+    this.app.post(this.path, ::this.handleRequest);
   }
 }

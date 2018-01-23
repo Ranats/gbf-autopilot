@@ -1,4 +1,4 @@
-from .jsonrpc import success, JsonRpcException, ServerErrorException, RequestErrorException
+from .jsonrpc import success, server_error, request_error, JsonRpcException
 
 def element_rect(rect):
     return (rect['x'], rect['y'], rect['width'], rect['height'])
@@ -22,29 +22,23 @@ class JsonRpcMethods:
         return self.do_click(rect, 2)
 
     def move(self, rect):
-        try:
-            self.controller.move_to(
-                element_rect(rect),
-                window_rect(rect)
-            )
-            return 'OK'
-        except ValueError as err:
-            raise ServerErrorException(str(err))
+        self.controller.move_to(
+            element_rect(rect),
+            window_rect(rect)
+        )
+        return 'OK'
 
     def key_press(self, key):
         self.controller.key_press(key)
         return 'OK'
 
     def do_click(self, rect, clicks=1):
-        try:
-            self.controller.click(
-                element_rect(rect),
-                window_rect(rect),
-                clicks=clicks
-            )
-            return 'OK'
-        except ValueError as err:
-            raise ServerErrorException(str(err))
+        self.controller.click(
+            element_rect(rect),
+            window_rect(rect),
+            clicks=clicks
+        )
+        return 'OK'
 
     def handle_request(self, json):
         req_id = json['id']
@@ -55,18 +49,23 @@ class JsonRpcMethods:
             if method is None:
                 raise AttributeError
         except AttributeError:
-            exc = RequestErrorException('Unknown method "%s"' % method_name)
-            return exc.to_json(req_id)
+            return request_error(req_id, 'Unknown method "%s"' % method_name)
 
         try:
-            params = json.get('params', [])
-            if isinstance(params, dict):
-                result = method(**params)
-            else:
+            params = json.get('params', None)
+            if isinstance(params, list):
                 result = method(*params)
+            elif isinstance(params, dict):
+                result = method(**params)
+            elif params is not None:
+                result = method(params)
+            else:
+                result = method()
             return success(req_id, result)
         except JsonRpcException as err:
             return err.to_json(req_id)
+        except (RuntimeError, ValueError) as err:
+            return server_error(req_id, str(err))
 
     def add_method(self, name, func):
         self.methods[name] = func

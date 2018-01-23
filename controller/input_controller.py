@@ -81,3 +81,6 @@ class InputController:
             tween=self.tween
         )
         delay()
+
+    def key_press(self, key):
+        self.window.key_press(key)
