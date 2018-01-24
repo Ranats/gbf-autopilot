@@ -16,6 +16,8 @@ import noop from "lodash/noop";
 import Worker from "./server/Worker";
 import WorkerManager from "./server/WorkerManager";
 import Logger from "./lib/Logger";
+import JsonRpcServer from "./lib/JsonRpcServer";
+import JsonRpcClient from "./lib/JsonRpcClient";
 
 // core extension
 import coreExtension from "gbf-autopilot-core";
@@ -30,10 +32,29 @@ export default class Server {
     this.rootDir = options.rootDir;
     this.logger = Logger(this.config);
     this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
+    this.controllerPort = Number(options.config.Controller.ListenerPort);
 
     // extension stuff
     this.coreExtension = coreExtension.server.call(this);
     this.extensions = this.loadExtensions(options.extensionNames);
+
+    // controller stuff
+    this.controller = new JsonRpcClient(this.controllerPort);
+
+    // JSON-RPC stuff
+    this.methods = {
+      "start": () => {
+        this.logger.debug("Got start request from webhook");
+        return this.start().then(() => "OK");
+      },
+      "stop": () => {
+        this.logger.debug("Got stop request from webhook");
+        return this.stop().then(() => "OK");
+      },
+      "sockets": () => {
+        return Object.keys(this.sockets).join(", ");
+      }
+    };
 
     this.refreshOptions(options);
     this.setupListeners();
@@ -99,6 +120,11 @@ export default class Server {
 
     this.setupExpress(this.app);
     this.setupSocket(this.io);
+    this.setupJsonRpc();
+  }
+
+  setupJsonRpc() {
+    this.jsonRpc = new JsonRpcServer(this.app, this.methods, this.config.Server.JsonRpcEndpoint);
   }
 
   setupExpress(app) {
@@ -115,16 +141,15 @@ export default class Server {
     this.emit("express.beforeSetup", app);
 
     app.use(bodyParser.text());
+    app.use(bodyParser.json());
     app.post("/start", (req, res) => {
-      this.logger.debug("Got start request from webhook");
-      defaultResponse(res, this.start());
+      defaultResponse(res, this.methods.start());
     });
     app.post("/stop", (req, res) => {
-      this.logger.debug("Got stop request from webhook");
-      defaultResponse(res, this.stop());
+      defaultResponse(res, this.methods.stop());
     });
     app.get("/sockets", (req, res) => {
-      res.end(Object.keys(this.sockets).join(", "));
+      res.end(this.methods.sockets());
     });
 
     this.emit("express.afterSetup", app);
@@ -143,9 +168,17 @@ export default class Server {
     this.emit("socket.afterSetup", io);
   }
 
-  makeRequest(path, data) {
-    this.emit("controller.request", {method: "POST", path, data}, true);
-    return axios.post(`http://localhost:${this.controllerPort}/${path}`, data);
+  /**
+   * Make request to the controller server
+   * @param {string} method 
+   * @param {object|array} params 
+   * @returns {Promise}
+   */
+  makeRequest(method, params) {
+    this.emit("controller.request", {method: "POST", path: method, data: params}, true);
+    // return axios.post(`http://localhost:${this.controllerPort}/${path}`, data);
+    this.emit("controller.jsonrpc.request", {method, params}, true);
+    return this.controller.request(method, params ? [params] : null);
   }
 
   onConnect(socket) {
@@ -204,7 +237,7 @@ export default class Server {
         });
       });
 
-      this.makeRequest("start").then(() => {
+      this.controller.start().then(() => {
         this.running = true;
         this.logger.info("Autopilot started.");
         return manager.start();
@@ -363,7 +396,10 @@ export default class Server {
       this.server.listen(this.port, "localhost", () => {
         this.emit("server.onListening");
         this.logger.debug("Started listening on localhost:" + this.port);
-        resolve(this.server);
+        resolve({
+          app: this, 
+          server: this.server
+        });
       });
     });
   }
@@ -394,7 +430,7 @@ export default class Server {
       const handleSocket = (cb) => {
         const socketId = Object.keys(this.sockets).pop();
         if (!socketId) {
-          this.makeRequest("stop").then(cb, ::this.defaultErrorHandler);
+          this.controller.stop().then(cb, ::this.defaultErrorHandler);
           return;
         }
 

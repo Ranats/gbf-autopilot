@@ -7,6 +7,7 @@ export default class WorkerManager {
     this.worker = worker;
     this.config = server.config;
     this.logger = server.logger;
+    this.controller = server.controller;
     this.running = false;
   }
 
@@ -18,6 +19,7 @@ export default class WorkerManager {
       socket: this.socket, 
       worker: this.worker, 
       logger: this.logger,
+      controller: this.controller,
       manager: this,
 
       isRunning: () => this.running

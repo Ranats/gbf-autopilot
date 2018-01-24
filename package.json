@@ -5,10 +5,14 @@
   "repository": "github:Frizz925/gbf-autopilot",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller.py\"",
+    "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python server.py\"",
     "build": "cross-env NODE_ENV=production gulp build",
-    "lint": "eslint index.js server/index.js src/**/*.js",
-    "test": "mocha",
+    "lint": "npm run lint:js && npm run lint:py",
+    "lint:js": "eslint index.js server/index.js src/**/*.js",
+    "lint:py": "python -m pylint controller test",
+    "test": "npm run test:server && npm run test:controller",
+    "test:server": "mocha test/server/**/*.js",
+    "test:controller": "python -m nose test.controller",
     "config": "gulp config",
     "key": "python keygen.py"
   },
