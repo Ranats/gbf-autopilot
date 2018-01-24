@@ -39,14 +39,14 @@ class ControllerServer:
 
     def on_start(self):
         if self.running:
-            raise RequestErrorException('Controller already running')
+            return 'Controller already running'
         self.running = True
         self.window.listen_for_escape(self.stop_command_server)
         return 'OK'
 
     def on_stop(self):
         if not self.running:
-            raise RequestErrorException('Controller not running')
+            return 'Controller not running'
         self.running = False
         return 'OK'
 
@@ -66,9 +66,9 @@ class ControllerServer:
     @Request.application
     def application(self, request):
         data = request.data.decode('utf-8')
-        data = json.loads(data)
-        self.logger.debug(data)
+        print(data)
 
+        data = json.loads(data)
         method = data['method']
         if self.running or method in self.jsonrpc_methods.methods:
             data = self.jsonrpc_methods.handle_request(data)
