@@ -1,6 +1,7 @@
 import requests
 from .jsonrpc import JSONRPC_VERSION, ResponseErrorException
 
+# pylint: disable=too-few-public-methods
 class JsonRpcClient:
     def __init__(self, port, host='localhost', path='/'):
         self.id = 0
