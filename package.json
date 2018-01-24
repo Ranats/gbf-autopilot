@@ -5,7 +5,7 @@
   "repository": "github:Frizz925/gbf-autopilot",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python controller\"",
+    "start": "cross-env NODE_ENV=production concurrently \"node index.js\" \"python server.py\"",
     "build": "cross-env NODE_ENV=production gulp build",
     "lint": "npm run lint:js && npm run lint:py",
     "lint:js": "eslint index.js server/index.js src/**/*.js",
