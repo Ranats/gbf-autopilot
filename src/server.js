@@ -1,5 +1,4 @@
 import http from "http";
-import axios from "axios";
 import shortid from "shortid";
 import SocketIO from "socket.io";
 import Express from "express";
@@ -43,15 +42,15 @@ export default class Server {
 
     // JSON-RPC stuff
     this.methods = {
-      "start": () => {
+      start: () => {
         this.logger.debug("Got start request from webhook");
         return this.start().then(() => "OK");
       },
-      "stop": () => {
+      stop: () => {
         this.logger.debug("Got stop request from webhook");
         return this.stop().then(() => "OK");
       },
-      "sockets": () => {
+      sockets: () => {
         return Object.keys(this.sockets).join(", ");
       }
     };
@@ -64,7 +63,7 @@ export default class Server {
 
   loadExtensions(extensionNames) {
     const extensions = {};
-    forEach(extensionNames, (extensionName) => {
+    forEach(extensionNames, extensionName => {
       const extension = require(extensionName);
       if (!extension.server) return;
       extensions[extensionName] = extension.server.call(this);
@@ -82,7 +81,7 @@ export default class Server {
         this.refreshOptions(options);
         resolve(options);
       } else {
-        this.readOptions().then((options) => {
+        this.readOptions().then(options => {
           this.refreshOptions(options);
           resolve(options);
         }, reject);
@@ -98,12 +97,12 @@ export default class Server {
 
   setupListeners() {
     this.listeners = {
-      "start": ::this.onSocketStart,
-      "stop": ::this.onSocketStop,
-      "action": ::this.onActionSuccess,
+      start: ::this.onSocketStart,
+      stop: ::this.onSocketStop,
+      action: ::this.onActionSuccess,
       "action.fail": ::this.onActionFail,
-      "broadcast": ::this.onBroadcast,
-      "disconnect": ::this.onDisconnect
+      broadcast: ::this.onBroadcast,
+      disconnect: ::this.onDisconnect
     };
   }
 
@@ -124,18 +123,25 @@ export default class Server {
   }
 
   setupJsonRpc() {
-    this.jsonRpc = new JsonRpcServer(this.app, this.methods, this.config.Server.JsonRpcEndpoint);
+    this.jsonRpc = new JsonRpcServer(
+      this.app,
+      this.methods,
+      this.config.Server.JsonRpcEndpoint
+    );
   }
 
   setupExpress(app) {
     const defaultResponse = (res, promise) => {
-      promise.then(() => {
-        res.end("OK");
-      }, (err) => {
-        this.defaultErrorHandler(err);
-        res.status(500);
-        res.end(err.toString());
-      });
+      promise.then(
+        () => {
+          res.end("OK");
+        },
+        err => {
+          this.defaultErrorHandler(err);
+          res.status(500);
+          res.end(err.toString());
+        }
+      );
     };
 
     this.emit("express.beforeSetup", app);
@@ -158,9 +164,9 @@ export default class Server {
   setupSocket(io) {
     this.emit("socket.beforeSetup", io);
 
-    io.on("connection", (socket) => {
+    io.on("connection", socket => {
       forEach(this.listeners, (listener, name) => {
-        socket.on(name, (msg) => listener(socket, msg));
+        socket.on(name, msg => listener(socket, msg));
       });
       this.onConnect(socket);
     });
@@ -170,14 +176,18 @@ export default class Server {
 
   /**
    * Make request to the controller server
-   * @param {string} method 
-   * @param {object|array} params 
+   * @param {string} method
+   * @param {object|array} params
    * @returns {Promise}
    */
   makeRequest(method, params) {
-    this.emit("controller.request", {method: "POST", path: method, data: params}, true);
+    this.emit(
+      "controller.request",
+      { method: "POST", path: method, data: params },
+      true
+    );
     // return axios.post(`http://localhost:${this.controllerPort}/${path}`, data);
-    this.emit("controller.jsonrpc.request", {method, params}, true);
+    this.emit("controller.jsonrpc.request", { method, params }, true);
     return this.controller.request(method, params ? [params] : null);
   }
 
@@ -200,14 +210,14 @@ export default class Server {
     this.emit("socket.socketStart", socket);
     this.logger.debug("Socket '" + socket.id + "' started");
 
-    this.refreshOptionsAsync().then(({config}) => {
+    this.refreshOptionsAsync().then(({ config }) => {
       const botTimeout = Number(config.General.TimeLimitInSeconds) * 1000;
       const worker = new Worker(this, config, socket);
       const manager = new WorkerManager(this, socket, worker);
       const context = manager.context;
 
-      const errorHandler = (error) => {
-        this.emit("worker.error", {context, error});
+      const errorHandler = error => {
+        this.emit("worker.error", { context, error });
         this.defaultErrorHandler(error);
         this.stop().then(noop, ::this.defaultErrorHandler);
       };
@@ -215,35 +225,47 @@ export default class Server {
       const timer = setTimeout(() => {
         if (!this.sockets[socket.id]) return;
         const error = new Error("Bot timed out!");
-        this.emit("worker.timeout", {context, error});
+        this.emit("worker.timeout", { context, error });
         this.logger.debug("Bot reaches maximum time. Disconnecting...");
         errorHandler(error);
       }, botTimeout);
 
       this.sockets[socket.id] = {
-        socket, worker, timer, manager,
+        socket,
+        worker,
+        timer,
+        manager,
         actions: {}
       };
 
       const workerEvents = [
-        "beforeStart", "start", 
-        "beforeSequence", "afterSequence", 
-        "finish", "afterFinish",
-        "beforeStop", "stop", "afterStop"
+        "beforeStart",
+        "start",
+        "beforeSequence",
+        "afterSequence",
+        "finish",
+        "afterFinish",
+        "beforeStop",
+        "stop",
+        "afterStop"
       ];
-      forEach(workerEvents, (eventName) => {
-        worker.on(eventName, (payload) => {
+      forEach(workerEvents, eventName => {
+        worker.on(eventName, payload => {
           this.emit("worker." + eventName, payload);
         });
       });
 
-      this.controller.start().then(() => {
-        this.running = true;
-        this.logger.info("Autopilot started.");
-        return manager.start();
-      }).then(() => {
-        return this.stop();
-      }).then(noop, errorHandler);
+      this.controller
+        .start()
+        .then(() => {
+          this.running = true;
+          this.logger.info("Autopilot started.");
+          return manager.start();
+        })
+        .then(() => {
+          return this.stop();
+        })
+        .then(noop, errorHandler);
     }, ::this.defaultErrorHandler);
   }
 
@@ -255,24 +277,34 @@ export default class Server {
   }
 
   onBroadcast(socket, data) {
-    this.emit("socket.broadcast", {
-      id: data.id,
-      name: data.action,
-      payload: data.payload,
-      socket, data
-    }, true);
+    this.emit(
+      "socket.broadcast",
+      {
+        id: data.id,
+        name: data.action,
+        payload: data.payload,
+        socket,
+        data
+      },
+      true
+    );
   }
 
   onAction(socket, data, callback) {
     const action = this.getAction(socket, data.id);
     // silently fail
     if (!action) return;
-    this.emit("socket.action", {
-      id: data.id,
-      action,
-      payload: data.payload,
-      socket, data
-    }, true);
+    this.emit(
+      "socket.action",
+      {
+        id: data.id,
+        action,
+        payload: data.payload,
+        socket,
+        data
+      },
+      true
+    );
     callback(action, data.payload);
     action.complete(data.payload);
     clearTimeout(action.timer);
@@ -280,14 +312,22 @@ export default class Server {
 
   onActionSuccess(socket, data) {
     this.onAction(socket, data, (action, payload) => {
-      this.emit("socket.actionSuccess", {id: data.id, action, payload, socket, data}, true);
+      this.emit(
+        "socket.actionSuccess",
+        { id: data.id, action, payload, socket, data },
+        true
+      );
       action.success(payload);
     });
   }
 
   onActionFail(socket, data) {
     this.onAction(socket, data, (action, payload) => {
-      this.emit("socket.actionFail", {id: data.id, action, payload, socket, data}, true);
+      this.emit(
+        "socket.actionFail",
+        { id: data.id, action, payload, socket, data },
+        true
+      );
       action.fail(payload);
     });
   }
@@ -298,10 +338,12 @@ export default class Server {
   }
 
   sendAction(realSocket, actionName, payload, timeout) {
-    timeout = !isObject(timeout) ? {
-      stopOnTimeout: true,
-      timeoutInMs: timeout
-    } : timeout;
+    timeout = !isObject(timeout)
+      ? {
+        stopOnTimeout: true,
+        timeoutInMs: timeout
+      }
+      : timeout;
     timeout.timeoutInMs = timeout.timeoutInMs || this.timeout;
 
     return new Promise((resolve, reject) => {
@@ -319,7 +361,8 @@ export default class Server {
         id,
         socket: realSocket,
         action: actionName,
-        payload, timeout
+        payload,
+        timeout
       };
       this.emit("socket.beforeSendAction", eventData, true);
 
@@ -331,38 +374,46 @@ export default class Server {
       };
 
       actions[id] = {
-        success: (payload) => {
+        success: payload => {
           eventData.payload = payload;
           this.emit("socket.successSendAction", eventData, true);
           resolve(payload);
           done();
         },
-        fail: (payload) => {
+        fail: payload => {
           eventData.payload = payload;
           this.emit("socket.failSendAction", eventData, true);
           reject(payload);
           done();
         },
-        timer: timeout.timeoutInMs > 0 ? setTimeout(() => {
-          if (resolved) {
-            done();
-            return;
-          }
+        timer:
+          timeout.timeoutInMs > 0
+            ? setTimeout(() => {
+              if (resolved) {
+                done();
+                return;
+              }
 
-          const error = eventData.error = new Error(`Action ${expression} timed out after ${timeout.timeoutInMs}ms!`);
-          this.emit("socket.timeoutSendAction", eventData, true);
-          reject(error);
-        }, timeout.timeoutInMs) : 0,
-        complete: (payload) => {
+              const error = (eventData.error = new Error(
+                `Action ${expression} timed out after ${
+                  timeout.timeoutInMs
+                }ms!`
+              ));
+              this.emit("socket.timeoutSendAction", eventData, true);
+              reject(error);
+            }, timeout.timeoutInMs)
+            : 0,
+        complete: payload => {
           eventData.payload = payload;
           this.emit("socket.afterSendAction", eventData, true);
         }
       };
 
       const data = {
-        id, payload, 
+        id,
+        payload,
         timeout: timeout.timeoutInMs,
-        action: actionName, 
+        action: actionName,
         type: "request"
       };
 
@@ -379,9 +430,9 @@ export default class Server {
         return;
       }
       this.logger.debug("Stopping socket '" + id + "'");
-      const {socket, timer, actions} = this.sockets[id];
+      const { socket, timer, actions } = this.sockets[id];
       delete this.sockets[id];
-      forEach(actions, (action) => {
+      forEach(actions, action => {
         clearTimeout(action.timer);
       });
       clearTimeout(timer);
@@ -392,12 +443,12 @@ export default class Server {
 
   listen() {
     this.emit("server.beforeListening");
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.listen(this.port, "localhost", () => {
         this.emit("server.onListening");
         this.logger.debug("Started listening on localhost:" + this.port);
         resolve({
-          app: this, 
+          app: this,
           server: this.server
         });
       });
@@ -427,7 +478,7 @@ export default class Server {
         this.logger.debug("Autopilot is not running!");
         return resolve();
       }
-      const handleSocket = (cb) => {
+      const handleSocket = cb => {
         const socketId = Object.keys(this.sockets).pop();
         if (!socketId) {
           this.controller.stop().then(cb, ::this.defaultErrorHandler);
@@ -455,7 +506,7 @@ export default class Server {
       });
     });
   }
-  
+
   defaultErrorHandler(err) {
     this.emit("server.error", err);
     err = err || new Error("Unknown error occured");
@@ -468,7 +519,7 @@ export default class Server {
   emit(eventName, payload, immutable) {
     payload = payload || {};
     if (!isObject(payload)) {
-      payload = {data: payload};
+      payload = { data: payload };
     }
     payload["$eventName"] = eventName;
     if (immutable) {
@@ -479,21 +530,24 @@ export default class Server {
   }
 
   getObservable(eventName) {
-    return this.subject.map((payload) => {
-      // We don't expect the observers to handle Immutable.js object though
-      // So we convert them back to plain JS object
-      return (payload && payload.toJS) ? payload.toJS() : payload;
-    }).filter((payload) => {
-      return payload["$eventName"] === eventName;
-    }).map((payload) => {
-      delete payload["$eventName"];
-      return payload;
-    });
+    return this.subject
+      .map(payload => {
+        // We don't expect the observers to handle Immutable.js object though
+        // So we convert them back to plain JS object
+        return payload && payload.toJS ? payload.toJS() : payload;
+      })
+      .filter(payload => {
+        return payload["$eventName"] === eventName;
+      })
+      .map(payload => {
+        delete payload["$eventName"];
+        return payload;
+      });
   }
 
   on(eventName, observer, onError, onComplete) {
     return this.getObservable(eventName).subscribe(
-      observer, 
+      observer,
       onError || ::this.defaultErrorHandler,
       onComplete
     );
