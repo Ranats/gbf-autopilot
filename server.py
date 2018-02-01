@@ -9,7 +9,7 @@ import pyautogui
 from werkzeug.wrappers import Request, Response
 from werkzeug.serving import run_simple
 
-from controller.jsonrpc import RequestErrorException, request_error
+from controller.jsonrpc import request_error
 from controller.window import Window
 from controller import JsonRpcMethods, JsonRpcClient, InputController
 
