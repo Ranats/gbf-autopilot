@@ -1,4 +1,5 @@
 require("babel-polyfill");
+require("dotenv").config();
 const fs = require("fs");
 const resolve = require("path").resolve;
 const ini = require("ini");
@@ -25,7 +26,7 @@ const readOptions = () => {
       resolve({
         rootDir,
         config: readConfig(),
-        extensionNames: readExtensionNames(),
+        extensionNames: readExtensionNames()
       });
     } catch (err) {
       reject(err);
@@ -43,10 +44,13 @@ const getServerClass = () => {
 };
 
 module.exports = function() {
-  return readOptions().then((options) => {
-    const Server = getServerClass();
-    return new Server(options, readOptions).listen();
-  }, (err) => {
-    throw err;
-  });
+  return readOptions().then(
+    options => {
+      const Server = getServerClass();
+      return new Server(options, readOptions).listen();
+    },
+    err => {
+      throw err;
+    }
+  );
 };

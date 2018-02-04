@@ -8,3 +8,4 @@ config.ini
 extensions.js
 watch.js
 .virtualenv/
+.env
