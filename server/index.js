@@ -15,7 +15,6 @@ const readExtensionNames = () => {
   try {
     return require("../extensions");
   } catch (err) {
-    console.log("extensions.js not found. Not loading extensions.");
     return [];
   }
 };
