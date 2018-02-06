@@ -4,6 +4,7 @@ from controller.stubs import CONFIG, ELEMENT_RECT, WINDOW_RECT
 from controller.window import DummyWindow
 from controller import InputController
 
+
 class WindowTest:
     def __init__(self):
         self.controller = InputController(DummyWindow(CONFIG))
