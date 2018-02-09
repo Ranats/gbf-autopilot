@@ -8,6 +8,7 @@ export default class WorkerManager {
     this.config = server.config;
     this.logger = server.logger;
     this.controller = server.controller;
+    this.scenarioConfig = server.scenarioConfig;
     this.running = false;
   }
 
@@ -15,11 +16,12 @@ export default class WorkerManager {
     const context = {
       id: shortid.generate(),
       config: this.config,
-      server: this.server, 
-      socket: this.socket, 
-      worker: this.worker, 
+      server: this.server,
+      socket: this.socket,
+      worker: this.worker,
       logger: this.logger,
       controller: this.controller,
+      scenarioConfig: this.scenarioConfig,
       manager: this,
 
       isRunning: () => this.running
@@ -36,7 +38,7 @@ export default class WorkerManager {
 
   start() {
     var context;
-    const stop = (result) => {
+    const stop = result => {
       context.result = result;
       this.emit("beforeStop", context);
       this.running = false;
@@ -56,13 +58,16 @@ export default class WorkerManager {
       this.resolveLater = context.finish = resolve;
       this.rejectLater = context.error = reject;
       this.emit("start", context);
-    }).then((result) => {
-      stop(result);
-      return result;
-    }, (error) => {
-      stop(error);
-      throw error;
-    });
+    }).then(
+      result => {
+        stop(result);
+        return result;
+      },
+      error => {
+        stop(error);
+        throw error;
+      }
+    );
   }
 
   stop() {
@@ -102,12 +107,13 @@ export default class WorkerManager {
         }
       }
 
-      return runner(context, step, lastResult).then((result) => {
-        return this.process(context, pipeline, result, runner);
-      }).then(resolve, reject);
+      return runner(context, step, lastResult)
+        .then(result => {
+          return this.process(context, pipeline, result, runner);
+        })
+        .then(resolve, reject);
     });
   }
-
 
   run(context, step, lastResult) {
     return new Promise((resolve, reject) => {

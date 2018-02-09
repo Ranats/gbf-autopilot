@@ -1,7 +1,4 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
@@ -14,9 +11,7 @@
       "cwd": "${workspaceFolder}",
       "env": {},
       "envFile": "${workspaceFolder}/.env",
-      "debugOptions": [
-        "RedirectOutput"
-      ]
+      "debugOptions": ["RedirectOutput"]
     },
     {
       "name": "Python: Launch server",
@@ -28,9 +23,7 @@
       "cwd": "${workspaceFolder}",
       "env": {},
       "envFile": "${workspaceFolder}/.env",
-      "debugOptions": [
-        "RedirectOutput"
-      ]
+      "debugOptions": ["RedirectOutput"]
     },
     {
       "name": "Node",
@@ -44,9 +37,7 @@
       "type": "node",
       "request": "attach",
       "protocol": "inspector",
-      "outFiles": [
-        "${workspaceFolder}/server/dist/**/*.js"
-      ],
+      "outFiles": ["${workspaceFolder}/server/dist/**/*.js"],
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
@@ -56,7 +47,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Node: Mocha Tests",
+      "name": "Node: Mocha Unit Tests",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
         "-u",
@@ -64,7 +55,9 @@
         "--timeout",
         "999999",
         "--colors",
-        "${workspaceFolder}/test/server/**/*.js"
+        "--require",
+        "babel-register",
+        "${workspaceFolder}/test/lib/**/*.js"
       ],
       "internalConsoleOptions": "openOnSessionStart"
     }

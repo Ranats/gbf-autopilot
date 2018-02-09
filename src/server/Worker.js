@@ -11,29 +11,44 @@ export default class Worker {
 
     this.config = config;
     this.socket = socket;
-    this.port = Number(config.Controller.ListenerPort);
+    this.port = Number(config.get("Controller.ListenerPort"));
 
-    this.processTimeout = Number(config.Server.ProcessTimeoutInMs);
-    this.workerTimeout = Number(config.Server.WorkerTimeoutInMs);
+    this.processTimeout = Number(config.get("Server.ProcessTimeoutInMs"));
+    this.workerTimeout = Number(config.get("Server.WorkerTimeoutInMs"));
   }
 
   async sendAction(actionName, payload, timeout) {
-    return await this.server.sendAction(this.socket, actionName, payload, timeout);
+    return await this.server.sendAction(
+      this.socket,
+      actionName,
+      payload,
+      timeout
+    );
   }
 
   run(context, step, lastResult) {
     step = step.bind(this, context, lastResult);
-    this.emit("beforeSequence", {context, sequence: step, lastResult});
+    this.emit("beforeSequence", { context, sequence: step, lastResult });
     return new Promise((resolve, reject) => {
-      const done = (processed) => {
+      const done = processed => {
         const result = resolve(processed);
-        this.emit("afterSequence", {context, sequence: step, lastResult, result});
+        this.emit("afterSequence", {
+          context,
+          sequence: step,
+          lastResult,
+          result
+        });
         return result;
       };
 
-      const fail = (err) => {
+      const fail = err => {
         const result = reject(err);
-        this.emit("errorSequence", {context, sequence: step, lastResult, result});
+        this.emit("errorSequence", {
+          context,
+          sequence: step,
+          lastResult,
+          result
+        });
         return result;
       };
 
@@ -56,15 +71,15 @@ export default class Worker {
 
   on(eventName, observer) {
     const subscription = this.subject
-      .filter(({name}) => name === eventName)
-      .map(({payload}) => payload)
+      .filter(({ name }) => name === eventName)
+      .map(({ payload }) => payload)
       .subscribe(observer);
     this.observers.set(observer, subscription);
     return subscription;
   }
 
   emit(eventName, payload) {
-    this.subject.next({name: eventName, payload});
+    this.subject.next({ name: eventName, payload });
     return this;
   }
 

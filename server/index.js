@@ -5,12 +5,14 @@ const resolve = require("path").resolve;
 const ini = require("ini");
 
 const rootDir = resolve(__dirname, "../");
-const readConfig = () => {
-  const content = fs.readFileSync(resolve(rootDir, "config.ini"), "utf-8");
-  const config = ini.parse(content);
-  return config;
+const readConfig = configPath => {
+  const content = fs.readFileSync(resolve(rootDir, configPath), "utf-8");
+  return ini.parse(content);
 };
-
+const readScenarioConfig = configPath => {
+  const content = fs.readFileSync(resolve(rootDir, configPath), "utf-8");
+  return JSON.parse(content);
+};
 const readExtensionNames = () => {
   try {
     return require("../extensions");
@@ -22,9 +24,13 @@ const readExtensionNames = () => {
 const readOptions = () => {
   return new Promise((resolve, reject) => {
     try {
+      const config = readConfig("config.ini");
+      const scenarioConfig = readScenarioConfig(config.General.ScenarioConfig);
+
       resolve({
         rootDir,
-        config: readConfig(),
+        config,
+        scenarioConfig,
         extensionNames: readExtensionNames()
       });
     } catch (err) {

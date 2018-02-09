@@ -17,6 +17,7 @@ import WorkerManager from "./server/WorkerManager";
 import Logger from "./lib/Logger";
 import JsonRpcServer from "./lib/JsonRpcServer";
 import JsonRpcClient from "./lib/JsonRpcClient";
+import ConfigWrapper from "./lib/ConfigWrapper";
 
 // core extension
 import coreExtension from "gbf-autopilot-core";
@@ -24,14 +25,10 @@ import coreExtension from "gbf-autopilot-core";
 export default class Server {
   constructor(options, readOptions) {
     this.options = options;
+    this.refreshOptions(options);
+
     this.readOptions = readOptions;
     this.subject = new Rx.Subject();
-
-    this.config = options.config;
-    this.rootDir = options.rootDir;
-    this.logger = Logger(this.config);
-    this.port = process.env.PORT || Number(options.config.Server.ListenerPort);
-    this.controllerPort = Number(options.config.Controller.ListenerPort);
 
     // extension stuff
     this.coreExtension = coreExtension.server.call(this);
@@ -55,7 +52,6 @@ export default class Server {
       }
     };
 
-    this.refreshOptions(options);
     this.setupListeners();
     this.setupStates();
     this.setupApps();
@@ -66,12 +62,14 @@ export default class Server {
     forEach(extensionNames, extensionName => {
       const extension = require(extensionName);
       if (!extension.server) return;
-      extensions[extensionName] = extension.server.call(this);
+      extensions[extensionName] = extension.server.call(this, this);
     });
     return extensions;
   }
 
   refreshOptions(options) {
+    this.rootDir = options.rootDir;
+    this.refreshScenarioConfig(options.scenarioConfig);
     this.refreshConfig(options.config);
   }
 
@@ -89,10 +87,17 @@ export default class Server {
     });
   }
 
+  refreshScenarioConfig(scenarioConfig) {
+    this.scenarioConfig = new ConfigWrapper(scenarioConfig);
+  }
+
   refreshConfig(config) {
+    config = new ConfigWrapper(config);
     this.config = config;
-    this.controllerPort = Number(config.Controller.ListenerPort);
-    this.timeout = Number(config.Server.ProcessTimeoutInMs);
+    this.logger = Logger(config);
+    this.port = process.env.PORT || Number(config.get("Server.ListenerPort"));
+    this.controllerPort = Number(config.get("Controller.ListenerPort"));
+    this.timeout = Number(config.get("Server.ProcessTimeoutInMs"));
   }
 
   setupListeners() {

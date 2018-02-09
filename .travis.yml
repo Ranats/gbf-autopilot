@@ -6,6 +6,7 @@ matrix:
         - npm run lint:js
         - npm run build
         - npm run config
+        - npm run test:lib
         - npm run test:server
     - language: python
       python: 3.6

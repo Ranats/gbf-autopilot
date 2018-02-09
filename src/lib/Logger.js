@@ -4,7 +4,7 @@ import fs from "fs";
 
 function getFilename(config, level) {
   const timestamp = moment().format("YYYYMMDD");
-  const directory = config.Debug.LogToFileDirectory || "log";
+  const directory = config.get("Debug.LogToFileDirectory") || "log";
   return directory + "/" + timestamp + (level ? "_" + level : "") + ".log";
 }
 
@@ -17,7 +17,7 @@ function ensureLogFile(config, level) {
 }
 
 function createFileTransport(config, level) {
-  return new (winston.transports.File)({
+  return new winston.transports.File({
     name: (level || "default") + "-file",
     filename: ensureLogFile(config, level),
     timestamp: true,
@@ -26,22 +26,24 @@ function createFileTransport(config, level) {
 }
 
 export default function(config) {
-  const level = config.Debug.LogLevel || "debug";
+  const level = config.get("Debug.LogLevel") || "debug";
   const transports = [];
-  
-  if (config.Debug.LogToOutput) {
-    transports.push(new (winston.transports.Console)({
-      timestamp: true,
-    }));
+
+  if (config.get("Debug.LogToOutput")) {
+    transports.push(
+      new winston.transports.Console({
+        timestamp: true
+      })
+    );
   }
 
-  if (config.Debug.LogToFile) {
+  if (config.get("Debug.LogToFile")) {
     if (level != "error") {
       transports.push(createFileTransport(config));
     }
     transports.push(createFileTransport(config, "error"));
   }
 
-  const logger = new (winston.Logger)({level, transports});
+  const logger = new winston.Logger({ level, transports });
   return logger;
 }
