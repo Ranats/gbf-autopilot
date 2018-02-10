@@ -131,7 +131,7 @@ export default class Server {
     this.jsonRpc = new JsonRpcServer(
       this.app,
       this.methods,
-      this.config.Server.JsonRpcEndpoint
+      this.config.get("Server.JsonRpcEndpoint")
     );
   }
 
@@ -215,9 +215,10 @@ export default class Server {
     this.emit("socket.socketStart", socket);
     this.logger.debug("Socket '" + socket.id + "' started");
 
-    this.refreshOptionsAsync().then(({ config }) => {
-      const botTimeout = Number(config.General.TimeLimitInSeconds) * 1000;
-      const worker = new Worker(this, config, socket);
+    this.refreshOptionsAsync().then(() => {
+      const botTimeout =
+        Number(this.config.get("General.TimeLimitInSeconds")) * 1000;
+      const worker = new Worker(this, this.config, socket);
       const manager = new WorkerManager(this, socket, worker);
       const context = manager.context;
 
@@ -515,7 +516,7 @@ export default class Server {
   defaultErrorHandler(err) {
     this.emit("server.error", err);
     err = err || new Error("Unknown error occured");
-    if (this.config.Debug.ThrowErrors) {
+    if (this.config.get("Debug.ThrowErrors")) {
       throw err;
     }
     this.logger.error(err instanceof Error ? err : err.toString());
