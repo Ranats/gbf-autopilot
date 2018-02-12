@@ -10,6 +10,7 @@ const readConfig = configPath => {
   return ini.parse(content);
 };
 const readScenarioConfig = configPath => {
+  if (!configPath) return {};
   const content = fs.readFileSync(resolve(rootDir, configPath), "utf-8");
   return JSON.parse(content);
 };
