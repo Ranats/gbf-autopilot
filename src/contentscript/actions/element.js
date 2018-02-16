@@ -201,5 +201,8 @@ export default {
       }
     });
     return result;
+  },
+  "element.count": function(selector) {
+    return query(selector).length;
   }
 };
