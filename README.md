@@ -95,27 +95,8 @@ npm start
 
 Make sure to also reload the Chrome extension in your browser.
 
-## Issues
-The current code base is still in alpha stage and may have many breaking changes, bugs, and other issues. You can request a feature by [opening a new issue](https://github.com/Frizz925/gbf-autopilot/issues/new) in this repository.
-
-**Where should the bug reports and other issues go?**  
-Make sure you have read the [Main vs Core extension codebase](https://github.com/Frizz925/gbf-autopilot/wiki/Main-vs-Core-extension-codebase) part to understand which codebase belongs to which repository.
-
-Example of issues that may belong to the **main** repository:
-- Incorrect mouse position
-- Keypress not registered
-- Bot failing to run (not caused by its extensions)
-
-[Open a new issue for main repository](https://github.com/Frizz925/gbf-autopilot/issues/new)
-
-Example of issues that may belong to the **core extension** repository:
-- Bot redirects to incorrect page or url
-- Bot not recognizing the state of the page
-- Bot executes incorrect action (eg. attacking instead of using summon)
-- Any other bot logic issues
-
-[Open a new issue for core extension repository](https://github.com/Frizz925/gbf-autopilot-core/issues/new)
-
+## UPDATE 2018-03-31
+Issues page will be closed by 2018-04-02 due to how trivial most of the bug reports are. Issues page will be re-opened when proper documentation has been made.
 
 ## License
 This software is licensed under the [MIT License](LICENSE)
