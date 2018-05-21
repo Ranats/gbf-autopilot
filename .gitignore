@@ -3,8 +3,7 @@ node_modules/
 __pycache__/
 *.py[cdo]
 .gulp-cache
-*.log
-extensions.js
+*.log\
 watch.js
 .virtualenv/
 .env

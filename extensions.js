@@ -1,0 +1,1 @@
+module.exports = ["gbf-autopilot-poker", 'gbf-autopilot-leech'];
