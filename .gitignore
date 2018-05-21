@@ -4,7 +4,6 @@ __pycache__/
 *.py[cdo]
 .gulp-cache
 *.log
-config.ini
 extensions.js
 watch.js
 .virtualenv/
