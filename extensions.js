@@ -1,1 +1,1 @@
-module.exports = ["gbf-autopilot-poker", 'gbf-autopilot-leech'];
+module.exports = ['gbf-autopilot-leech'];//"gbf-autopilot-poker", 'gbf-autopilot-leech'];

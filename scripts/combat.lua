@@ -2,6 +2,7 @@ function Summon(idx)
   refresh_state(run_processes({
     steps.Combat:Summon(idx, _state),
     steps.Timeout(1500)
+    steps.Wait(2500)
   }))
 end
 

@@ -1,0 +1,17 @@
+character_1:UseSkill(1)
+    :UseSkill(2)
+    :UseSkill(3)
+    :UseSkill(4)
+character_2:UseSkill(2)
+    :UseSkill(1)
+    :UseSkill(3)
+    :UseSkill(4)
+character_3:UseSkill(1)
+    :UseSkill(2)
+character_4:UseSkill(2)
+
+
+Attack()
+Wait(2400)
+--TerminateBattle()
+--Refresh()
