@@ -20,26 +20,17 @@ character_3:UseSkill(1)
 character_4:UseSkill(2)
     :UseSkill(1)
 
---if summon_1_available then
-    Summon(1)
---end
---if summon_2_available then
-    Summon(2)
---end
-
-if turn > 7  then
+Summon(1)
+Summon(2)
+Summon(4)
+Summon(6)
+    
+if turn > 7 then
     Summon(3)
     Summon(5)
 end
---if summon_4_available then
-    Summon(4)
---end
---if summon_5_available then
---end
---if summon_6_available then
-    Summon(6)
 
---gbf-autopilot\node_modules\gbf-autopilot-core\src\server\steps
+-- functions => ..\node_modules\gbf-autopilot-core\src\server\steps
 if enemy_1.hp_percentage < 50 then
     RequestBackup(true,true,false)
 end
@@ -47,7 +38,6 @@ end
 Attack()
 Wait(2400)
 
-if enemy_1.hp_percentage == 0 then
-    TerminateBattle()
-end
-    --Refresh()
+--if enemy_1.hp_percentage == 0 then
+--    TerminateBattle()
+--end
