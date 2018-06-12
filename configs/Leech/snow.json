@@ -1,0 +1,12 @@
+{
+    "Mode": "Leech",
+    "Lua.Script": "scripts/Leech.lua",
+    "Raid.Bosses": ["Lvl 100 Snow White", "Lv100 スノウホワイト"],
+    "Raid.Timeout": 65000,
+    "Summon.Preferred": ["Kaguya", "White Rabbit", "Black Rabbit","カグヤ","ホワイトラビット","ブラックラビット"],
+    "Summon.Attribute": "Misc",
+    "Summon.Reroll": false,
+    "Party.Group": 1,
+    "Party.Deck": 2,
+    "Party.Set": "A"
+  }

@@ -1,0 +1,14 @@
+{
+  "Mode": "Event",
+  "Event.Url": "http://game.granbluefantasy.jp/#quest/extra",
+
+  "Lua.Script": "scripts/Halo.lua",
+  "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/510031/5",
+  "Party.Group": 4,
+  "Party.Deck": 3,
+  "Party.Set": "A",
+  "Summon.Preferred": ["Kaguya", "White Rabbit_1", "Black Rabbit_1"],
+  "Summon.Attribute": "Misc",
+  "Summon.Reroll": true
+
+}

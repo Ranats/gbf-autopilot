@@ -1,0 +1,12 @@
+{
+    "Mode": "Leech",
+    "Lua.Script": "scripts/hard.lua",
+    "Raid.Bosses": ["Lvl 50 Leviathan","Lvl 30 Leviathan","Lvl 60 Leviathan", "Lv50 リヴァイアサン","Lv30 リヴァイアサン","Lv60 リヴァイアサン"],
+    "Raid.Timeout": 65000,
+    "Summon.Preferred": ["Kaguya", "White Rabbit", "Black Rabbit","カグヤ","ホワイトラビット","ブラックラビット"],
+    "Summon.Attribute": "Misc",
+    "Summon.Reroll": false,
+    "Party.Group": 1,
+    "Party.Deck": 2,
+    "Party.Set": "A"
+  }

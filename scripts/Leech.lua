@@ -14,7 +14,7 @@ character_3:UseSkill(2)
 --    :UseSkill(3)
 character_2:UseSkill(1)
 
---Summon(6)
+Summon(6)
 
 Attack()
 Wait(2400)

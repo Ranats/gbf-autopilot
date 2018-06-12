@@ -1,0 +1,24 @@
+{
+  "Mode": "Event",
+  "Event.Url": "http://game.granbluefantasy.jp/#quest/supporter/720461/3",
+
+  "Lua.Script": "scripts/feni.lua",
+  "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/720461/3",
+  "Party.Group": 3,
+  "Party.Deck": 1,
+  "Party.Set": "A",
+  "Summon.Preferred": ["Kaguya", "White Rabbit_1", "Black Rabbit_1"],
+  "Summon.Attribute": "Misc",
+  "Summon.Reroll": false,
+
+  "Nightmare": {
+    "Lua.Script": "scripts/Halo/Nightmare.lua",
+    "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/720461/3",
+    "Party.Group": 3,
+    "Party.Deck": 1,
+    "Party.Set": "A",
+    "Summon.Preferred": ["Kaguya"],
+    "Summon.Attribute": "Fire",
+    "Summon.Reroll": false
+  }
+}

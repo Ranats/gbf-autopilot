@@ -1,0 +1,14 @@
+{
+  "Mode": "EventTreasure",
+  "Event.Url": "http://game.granbluefantasy.jp/#event/treasureraid069",
+
+  "Lua.Script": "scripts/gollila.lua",
+  "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/729691/1",
+  "Party.Group": 1,
+  "Party.Deck": 3,
+  "Party.Set": "A",
+  "Summon.Preferred": ["Kaguya", "White Rabbit_1", "Black Rabbit_1"],
+  "Summon.Attribute": "Misc",
+  "Summon.Reroll": false
+
+}

@@ -1,0 +1,4 @@
+"use strict";Object.defineProperty(exports, "__esModule", { value: true });exports.default = function (action, payload) {var success = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+  return { action: action, payload: payload, success: success };
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImxpYlxcbWVzc2FnaW5nXFxwYWNrZXIuanMiXSwibmFtZXMiOlsiYWN0aW9uIiwicGF5bG9hZCIsInN1Y2Nlc3MiXSwibWFwcGluZ3MiOiI2RkFBZSxVQUFTQSxNQUFULEVBQWlCQyxPQUFqQixFQUF3QyxLQUFkQyxPQUFjLHVFQUFOLElBQU07QUFDckQsU0FBTyxFQUFDRixjQUFELEVBQVNDLGdCQUFULEVBQWtCQyxnQkFBbEIsRUFBUDtBQUNELEMiLCJmaWxlIjoibGliXFxtZXNzYWdpbmdcXHBhY2tlci5qcyIsInNvdXJjZXNDb250ZW50IjpbImV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uKGFjdGlvbiwgcGF5bG9hZCwgc3VjY2Vzcz10cnVlKSB7XG4gIHJldHVybiB7YWN0aW9uLCBwYXlsb2FkLCBzdWNjZXNzfTtcbn1cbiJdfQ==

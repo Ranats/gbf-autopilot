@@ -1,0 +1,24 @@
+{
+  "Mode": "Event",
+  "Event.Url": "http://game.granbluefantasy.jp/#quest/extra",
+
+  "Lua.Script": "scripts/ousui.lua",
+  "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/599821/5",
+  "Party.Group": 1,
+  "Party.Deck": 2,
+  "Party.Set": "A",
+  "Summon.Preferred": ["Kaguya", "White Rabbit_1", "Black Rabbit_1"],
+  "Summon.Attribute": "Misc",
+  "Summon.Reroll": false,
+
+  "Nightmare": {
+    "Lua.Script": "scripts/Halo/Nightmare.lua",
+    "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/599821/5",
+    "Party.Group": 1,
+    "Party.Deck": 2,
+    "Party.Set": "A",
+    "Summon.Preferred": ["Kaguya"],
+    "Summon.Attribute": "Misc",
+    "Summon.Reroll": false
+  }
+}
