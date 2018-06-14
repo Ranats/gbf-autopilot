@@ -1,0 +1,13 @@
+{
+  "Mode": "Default",
+  "Quest.Url": "http://game.granbluefantasy.jp/#quest/supporter/101271/3",
+
+  "Lua.Script": "scripts/IChallengeYou.lua",
+  "Party.Group": 4,
+  "Party.Deck": 4,
+  "Party.Set": "A",
+  "Summon.Preferred": ["Kaguya", "White Rabbit_1", "Black Rabbit_1"],
+  "Summon.Attribute": "Misc",
+  "Summon.Reroll": true
+
+}
